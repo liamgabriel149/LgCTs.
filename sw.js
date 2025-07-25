@@ -9,6 +9,6 @@ self.addEventListener("activate", function (event) {
 self.addEventListener("notificationclick", function (event) {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow("https://liamgabriel149.github.io/LgCTs1/") // Change to your GitHub Page
+    clients.openWindow("https://liamgabriel149.github.io/LgCTs2/") // Change to your GitHub Page
   );
 });
