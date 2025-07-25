@@ -248,24 +248,12 @@
       });
     });
 
-    // 🔁 Monitor flow and auto-create alert if switch is OFF and flow detected
     let lastValue = 0;
     firebase.database().ref(path).on("value", (snap) => {
       const val = snap.val() || 0;
       document.getElementById("counterDisplay").innerText = String(val).padStart(5, '0');
-
       if (val > lastValue) {
-        switchRef.get().then(snapshot => {
-          const isOn = snapshot.val();
-          if (!isOn) {
-            const alertData = {
-              message: "Water leak detected",
-              pulses: val,
-              timestamp: Date.now()
-            };
-            alertsRef.push(alertData);
-          }
-        });
+        // Flow changed but no alert will be created
       }
       lastValue = val;
     });
@@ -300,10 +288,8 @@
       window.location.href = "index.html";
     }
 
-    // ✅ Show Notification on desktop/mobile
     async function fireSystemNotification(title, message) {
       if (!("Notification" in window)) return;
-
       const permission = await Notification.requestPermission();
       if (permission === "granted") {
         const reg = await navigator.serviceWorker.getRegistration();
@@ -318,7 +304,6 @@
       }
     }
 
-    // ✅ Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register("sw.js")
         .then(() => console.log("✅ Service Worker registered."))
