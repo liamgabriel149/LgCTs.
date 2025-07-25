@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- MOBILE SCALING -->
+  <title>Admin Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      background: #121212;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      position: relative;
+      background: #1e1e1e;
+      padding: 2rem;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 1000px;
+      text-align: center;
+      box-shadow: 0 0 12px rgba(255,255,255,0.04);
+    }
+    .logout {
+      position: absolute;
+      top: 20px; left: 20px;
+      cursor: pointer;
+      color: #ccc;
+      transition: 0.2s;
+    }
+    .logout:hover { color: #ff4d4d; }
+
+    input, select, button {
+      margin: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      width: calc(100% - 20px);
+      max-width: 300px;
+    }
+    input, select {
+      background: #2b2b2b;
+      color: white;
+    }
+    button {
+      background: #0095f6;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover { background: #007dd1; }
+    .success {
+      margin-top: 15px;
+      color: #32cd32;
+    }
+    .filter-bar {
+      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .user-list {
+      margin-top: 30px;
+      text-align: left;
+    }
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      background: #2a2a2a;
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .actions button {
+      margin-left: 10px;
+    }
+    .actions .edit { background: #ffc107; }
+    .actions .delete { background: #e74c3c; }
+
+    /* ✅ MOBILE STYLE */
+    @media (max-width: 600px) {
+      .container {
+        padding: 1rem;
+      }
+      .user-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .user-item span, .user-item .actions {
+        width: 100%;
+        margin: 5px 0;
+      }
+      input, select, button {
+        font-size: 16px;
+        padding: 14px;
+        width: 100%;
+        max-width: 100%;
+      }
+      .logout {
+        position: static;
+        margin-bottom: 10px;
+        text-align: left;
+        width: 100%;
+      }
+    }
+  </style>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="logout" onclick="logout()">🔓 Log Out</div>
+    <h2>Admin Dashboard</h2>
+    <form id="userForm">
+      <input type="text" id="username" placeholder="New Username" required/>
+      <input type="password" id="password" placeholder="New Password" required/>
+      <select id="role" required>
+        <option value="">Select Role</option>
+        <option value="admin">Admin</option>
+        <option value="employee">Employee</option>
+        <option value="residence">Residence</option>
+      </select>
+      <input type="text" id="sensorPath" placeholder="Sensor Path for residence" style="display:none;"/>
+      <input type="text" id="logPath" placeholder="Log Path for residence" style="display:none;"/>
+      <button type="submit">Save Account</button>
+    </form>
+    <div class="success" id="messageBox"></div>
+    <div class="filter-bar">
+      <select id="roleFilter">
+        <option value="all">All Roles</option>
+        <option value="residence">Residence</option>
+        <option value="employee">Employee</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="Search by username..."/>
+    </div>
+    <div class="user-list" id="userList"></div>
+  </div>
+
+<script>
+  const config = { databaseURL: "https://log-in-data-ca0c3-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+  firebase.initializeApp(config);
+  const db = firebase.database();
+  let editUserId = null, usersData = {};
+
+  document.getElementById("role").addEventListener("change", e => {
+    const show = e.target.value === "residence";
+    document.getElementById("sensorPath").style.display = show ? "block" : "none";
+    document.getElementById("logPath").style.display = show ? "block" : "none";
+  });
+
+  document.getElementById("userForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const u = document.getElementById("username").value.trim();
+    const p = document.getElementById("password").value.trim();
+    const r = document.getElementById("role").value;
+    const sp = document.getElementById("sensorPath").value.trim();
+    const lp = document.getElementById("logPath").value.trim();
+    if (!u || !p || !r) return showMsg("❌ All fields are required");
+    const userData = { username:u, password:p, role:r };
+    if (r === "residence") {
+      if (!sp || !lp) return showMsg("❌ Paths required for residence");
+      userData.sensorPath = sp; userData.logPath = lp;
+    }
+    const ref = editUserId ? db.ref("users/"+editUserId) : db.ref("users").push();
+    ref.set(userData).then(() => {
+      showMsg("✅ Account saved");
+      document.getElementById("userForm").reset();
+      editUserId=null;
+      document.getElementById("sensorPath").style.display="none";
+      document.getElementById("logPath").style.display="none";
+      loadUsers();
+    });
+  });
+
+  function showMsg(msg) { document.getElementById("messageBox").innerText=msg; }
+
+  function loadUsers() {
+    db.ref("users").once("value")
+      .then(snap => { usersData = snap.val()||{}; renderUsers(); });
+  }
+
+  function renderUsers() {
+    const userList = document.getElementById("userList");
+    const rf = document.getElementById("roleFilter").value;
+    const sw = document.getElementById("searchInput").value.toLowerCase();
+    userList.innerHTML = "<h3>Registered Users:</h3>";
+    let found=0;
+    for (const id in usersData) {
+      const u = usersData[id];
+      if ((rf==="all"||u.role===rf) && u.username.toLowerCase().includes(sw)) {
+        found++;
+        const info = u.role==="residence"
+          ? `<div style="font-size:12px;opacity:0.6">📡 ${u.sensorPath}<br>📝 ${u.logPath}</div>`
+          : "";
+        userList.innerHTML += `
+<div class="user-item">
+  <span><strong>${u.username}</strong> (${u.role})</span>
+  <span style="opacity:0.6">${u.password}</span>
+  ${info}
+  <div class="actions">
+    <button class="edit" onclick="editUser('${id}')">Edit</button>
+    <button class="delete" onclick="deleteUser('${id}')">Delete</button>
+  </div>
+</div>`;
+      }
+    }
+    if (!found) userList.innerHTML += "<p>No users found.</p>";
+  }
+
+  function editUser(id) {
+    const u = usersData[id];
+    document.getElementById("username").value=u.username;
+    document.getElementById("password").value=u.password;
+    document.getElementById("role").value=u.role;
+    document.getElementById("sensorPath").value=u.sensorPath||"";
+    document.getElementById("logPath").value=u.logPath||"";
+    editUserId=id;
+    showMsg("✏️ Editing user...");
+    const ev = new Event('change');
+    document.getElementById("role").dispatchEvent(ev);
+  }
+
+  function deleteUser(id) {
+    if (confirm("Delete this user?")) {
+      db.ref("users/"+id).remove().then(() => {
+        showMsg("🗑️ Deleted");
+        loadUsers();
+      });
+    }
+  }
+
+  function logout() { localStorage.clear(); window.location.href="index.html"; }
+
+  document.getElementById("roleFilter").addEventListener("change", renderUsers);
+  document.getElementById("searchInput").addEventListener("input", renderUsers);
+
+  loadUsers();
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<script>
+class FirebaseRDB {
+    constructor(baseURL) {
+        this.baseURL = baseURL.endsWith('/') ? baseURL : baseURL + '/';
+    }
+
+    async request(path, method, data = null) {
+        const url = `${this.baseURL}${path}.json`;
+        const options = {
+            method,
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };
+
+        if (data) {
+            options.body = JSON.stringify(data);
+        }
+
+        try {
+            const response = await fetch(url, options);
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error(`Error during ${method} request to ${url}:`, error);
+            return null;
+        }
+    }
+
+    retrieve(path) {
+        return this.request(path, "GET");
+    }
+
+    insert(path, data) {
+        return this.request(path, "POST", data);
+    }
+
+    update(path, data) {
+        return this.request(path, "PATCH", data);
+    }
+
+    delete(path) {
+        return this.request(path, "DELETE");
+    }
+}
+</script>

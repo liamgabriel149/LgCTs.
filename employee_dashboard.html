@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #121212;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #00bcd4;
+      font-size: 28px;
+    }
+
+    .form-container {
+      background-color: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      margin: 0 auto 30px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.05);
+    }
+
+    input[type="text"],
+    input[type="password"] {
+  width: calc(100% - 20px); /* Reduce space from right */
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #2b2b2b;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+}   
+
+    button {
+      padding: 10px 20px;
+      background-color: #0095f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #007dd1;
+    }
+
+    .logout-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: #ff4d4d;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 0 10px rgba(255, 77, 77, 0.4);
+      z-index: 10;
+    }
+
+    .logout-btn:hover {
+      background-color: #e53935;
+    }
+
+    .account-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 0 10px;
+    }
+
+    .meter-card {
+      background-color: #1e1e1e;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 188, 212, 0.2);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .meter-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .username {
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 18px;
+      color: #80deea;
+    }
+
+    .circle-meter {
+      width: 160px;
+      height: 160px;
+      margin: 0 auto;
+      border-radius: 50%;
+      background: radial-gradient(circle, #263238 60%, #00bcd4 100%);
+      border: 6px solid #00bcd4;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 0 20px #00bcd4;
+    }
+
+    .circle-meter .value {
+      font-size: 30px;
+      font-weight: bold;
+      color: #ffffff;
+      letter-spacing: 3px;
+      text-shadow: 0 0 6px #4dd0e1;
+    }
+
+    .circle-meter .unit {
+      font-size: 13px;
+      color: #b0e0e6;
+    }
+
+    /* Responsive adjustments */
+    @media (min-width: 768px) {
+      body {
+        padding: 40px;
+      }
+      h1 {
+        font-size: 32px;
+      }
+      button {
+        width: auto;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logout-btn {
+        font-size: 12px;
+        padding: 8px 12px;
+        top: 10px;
+        left: 10px;
+      }
+
+      .circle-meter {
+        width: 120px;
+        height: 120px;
+      }
+
+      .circle-meter .value {
+        font-size: 24px;
+      }
+
+      .circle-meter .unit {
+        font-size: 12px;
+      }
+
+      .username {
+        font-size: 16px;
+      }
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <h1>Welcome, Employee</h1>
+
+  <div class="form-container">
+    <h3>Add Residence Account</h3>
+    <form id="residenceForm">
+      <input type="text" id="resUsername" placeholder="Username" required><br>
+      <input type="password" id="resPassword" placeholder="Password" required><br>
+      <input type="text" id="sensorPath" placeholder="Sensor Path (e.g. /sensors1/object1_counter/value)" required><br>
+      <button type="submit">Add Residence</button>
+    </form>
+  </div>
+
+  <div class="account-list" id="residenceList"></div>
+
+  <button class="logout-btn" onclick="logout()">Logout</button>
+
+  <script>
+    const userApp = firebase.initializeApp({
+      databaseURL: "https://log-in-data-ca0c3-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    }, "userApp");
+
+    const userDB = firebase.database(userApp);
+
+    const meterApp = firebase.initializeApp({
+      databaseURL: "https://liam-5c1d5-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    }, "meterApp");
+
+    const meterDB = firebase.database(meterApp);
+
+    document.getElementById("residenceForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById("resUsername").value.trim();
+      const password = document.getElementById("resPassword").value.trim();
+      const sensorPath = document.getElementById("sensorPath").value.trim();
+
+      const newUser = {
+        username: username,
+        password: password,
+        role: "residence",
+        sensorPath: sensorPath
+      };
+
+      userDB.ref("users").push(newUser)
+        .then(() => {
+          alert("Residence account added!");
+          document.getElementById("residenceForm").reset();
+          loadResidenceAccounts();
+        })
+        .catch(err => alert("Error: " + err.message));
+    });
+
+    function loadResidenceAccounts() {
+      const list = document.getElementById("residenceList");
+      list.innerHTML = "";
+
+      userDB.ref("users").once("value").then(snapshot => {
+        snapshot.forEach(child => {
+          const user = child.val();
+          if (user.role === "residence") {
+            const username = user.username;
+            const path = user.sensorPath || "/sensors1/object1_counter/value";
+
+            const card = document.createElement("div");
+            card.className = "meter-card";
+
+            const title = document.createElement("div");
+            title.className = "username";
+            title.textContent = username;
+
+            const meterCircle = document.createElement("div");
+            meterCircle.className = "circle-meter";
+
+            const valueEl = document.createElement("div");
+            valueEl.className = "value";
+            valueEl.textContent = "...";
+
+            const unitEl = document.createElement("div");
+            unitEl.className = "unit";
+            unitEl.textContent = "Water Meter";
+
+            meterCircle.appendChild(valueEl);
+            meterCircle.appendChild(unitEl);
+            card.appendChild(meterCircle);
+            card.appendChild(title);
+            list.appendChild(card);
+
+            meterDB.ref(path).on("value", snap => {
+              const val = snap.val();
+              valueEl.textContent = val ?? "0";
+            }, () => {
+              valueEl.textContent = "N/A";
+            });
+          }
+        });
+      });
+    }
+
+    function logout() {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.replace("index.html");
+    }
+
+    loadResidenceAccounts();
+  </script>
+</body>
+</html>
