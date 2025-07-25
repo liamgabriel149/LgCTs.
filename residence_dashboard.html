@@ -248,22 +248,24 @@
       });
     });
 
-    // 🔁 Monitor flow and auto-create alert if switch is OFF and flow detected
     let lastValue = 0;
     firebase.database().ref(path).on("value", (snap) => {
       const val = snap.val() || 0;
       document.getElementById("counterDisplay").innerText = String(val).padStart(5, '0');
 
+      const lastAlerted = Number(localStorage.getItem("lastAlertedPulses")) || 0;
+
       if (val > lastValue) {
         switchRef.get().then(snapshot => {
           const isOn = snapshot.val();
-          if (!isOn) {
+          if (!isOn && val !== lastAlerted) {
             const alertData = {
               message: "Water leak detected",
               pulses: val,
               timestamp: Date.now()
             };
             alertsRef.push(alertData);
+            localStorage.setItem("lastAlertedPulses", val);
           }
         });
       }
@@ -277,12 +279,13 @@
       if (alert.timestamp > lastSeenTimestamp) {
         unseenCount++;
         notifCount.innerText = unseenCount;
+
+        alertBox.style.display = "block";
+        alertBox.innerText = `🚨 ${alert.message} (Pulses: ${alert.pulses})`;
+        setTimeout(() => { alertBox.style.display = "none"; }, 5000);
+
         fireSystemNotification(`🚨 ${alert.message}`, `Pulses: ${alert.pulses}`);
       }
-
-      alertBox.style.display = "block";
-      alertBox.innerText = `🚨 ${alert.message} (Pulses: ${alert.pulses})`;
-      setTimeout(() => { alertBox.style.display = "none"; }, 5000);
 
       const notifItem = document.createElement("li");
       notifItem.innerHTML = `${alert.message} at ${new Date(alert.timestamp).toLocaleTimeString()} <button onclick="deleteNotif('${key}', this)">Delete</button>`;
@@ -300,12 +303,10 @@
       window.location.href = "index.html";
     }
 
-    // ✅ Show Notification on desktop/mobile
     async function fireSystemNotification(title, message) {
       if (!("Notification" in window)) return;
 
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
+      if (Notification.permission === "granted") {
         const reg = await navigator.serviceWorker.getRegistration();
         if (reg) {
           reg.showNotification(title, {
@@ -315,10 +316,14 @@
             tag: "water-alert"
           });
         }
+      } else if (Notification.permission === "default") {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          fireSystemNotification(title, message); // retry if allowed
+        }
       }
     }
 
-    // ✅ Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register("sw.js")
         .then(() => console.log("✅ Service Worker registered."))
