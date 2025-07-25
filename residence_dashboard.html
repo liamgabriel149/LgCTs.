@@ -127,14 +127,57 @@
       background: #d32f2f;
       display: none;
     }
+    .notif-popup {
+      display: none;
+      background: #1e1e1e;
+      border: 1px solid #444;
+      padding: 10px;
+      border-radius: 8px;
+      position: absolute;
+      top: 50px;
+      left: 0;
+      width: 300px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 10;
+    }
+    .notif-popup ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .notif-popup li {
+      padding: 8px;
+      border-bottom: 1px solid #333;
+      color: #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .notif-popup li button {
+      background: #ff3b3f;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    @media (max-width: 400px) {
+      .meter-circle { width: 90vw; height: 90vw; }
+      .reading { font-size: 12vw; }
+    }
   </style>
 </head>
 <body>
   <div class="top-bar">
     <div style="position: relative;">
-      <button class="notif-button">
+      <button class="notif-button" onclick="toggleNotifPopup()">
         Notifications <span class="notif-count" id="notifCount">0</span>
       </button>
+      <div class="notif-popup" id="notifPopup">
+        <ul id="notifList"></ul>
+      </div>
     </div>
     <button class="switch-button" id="toggleBtn">Toggle Switch</button>
     <button class="logout-button" onclick="logout()">Logout</button>
@@ -168,18 +211,29 @@
     document.getElementById("welcomeMessage").innerText = `Welcome, ${username}`;
 
     const switchRef = db.ref("/sensors1/control_switch/value");
+    const alertsRef = db.ref("/sensors1/water_alerts");
+
     const switchStatus = document.getElementById("switchStatus");
     const toggleBtn = document.getElementById("toggleBtn");
     const alertBox = document.getElementById("alertBox");
-    const counterDisplay = document.getElementById("counterDisplay");
+    const notifList = document.getElementById("notifList");
+    const notifPopup = document.getElementById("notifPopup");
+    const notifCount = document.getElementById("notifCount");
 
-    let lastValue = 0;
+    let lastSeenTimestamp = Number(localStorage.getItem("lastSeenTimestamp")) || 0;
+    let unseenCount = 0;
+    notifCount.innerText = unseenCount;
 
-    firebase.database().ref(path).on("value", (snap) => {
-      const val = snap.val() || 0;
-      counterDisplay.innerText = String(val).padStart(5, '0');
-      lastValue = val;
-    });
+    function toggleNotifPopup() {
+      const isVisible = notifPopup.style.display === 'block';
+      notifPopup.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) {
+        lastSeenTimestamp = Date.now();
+        localStorage.setItem("lastSeenTimestamp", lastSeenTimestamp);
+        unseenCount = 0;
+        notifCount.innerText = unseenCount;
+      }
+    }
 
     switchRef.on("value", (snapshot) => {
       const isOn = snapshot.val();
@@ -194,9 +248,81 @@
       });
     });
 
+    // 🔁 Monitor flow and auto-create alert if switch is OFF and flow detected
+    let lastValue = 0;
+    firebase.database().ref(path).on("value", (snap) => {
+      const val = snap.val() || 0;
+      document.getElementById("counterDisplay").innerText = String(val).padStart(5, '0');
+
+      if (val > lastValue) {
+        switchRef.get().then(snapshot => {
+          const isOn = snapshot.val();
+          if (!isOn) {
+            const alertData = {
+              message: "Water leak detected",
+              pulses: val,
+              timestamp: Date.now()
+            };
+            alertsRef.push(alertData);
+          }
+        });
+      }
+      lastValue = val;
+    });
+
+    alertsRef.on("child_added", (snapshot) => {
+      const alert = snapshot.val();
+      const key = snapshot.key;
+
+      if (alert.timestamp > lastSeenTimestamp) {
+        unseenCount++;
+        notifCount.innerText = unseenCount;
+        fireSystemNotification(`🚨 ${alert.message}`, `Pulses: ${alert.pulses}`);
+      }
+
+      alertBox.style.display = "block";
+      alertBox.innerText = `🚨 ${alert.message} (Pulses: ${alert.pulses})`;
+      setTimeout(() => { alertBox.style.display = "none"; }, 5000);
+
+      const notifItem = document.createElement("li");
+      notifItem.innerHTML = `${alert.message} at ${new Date(alert.timestamp).toLocaleTimeString()} <button onclick="deleteNotif('${key}', this)">Delete</button>`;
+      notifList.prepend(notifItem);
+    });
+
+    function deleteNotif(key, btn) {
+      db.ref(`/sensors1/water_alerts/${key}`).remove().then(() => {
+        btn.parentElement.remove();
+      });
+    }
+
     function logout() {
       localStorage.clear();
       window.location.href = "index.html";
+    }
+
+    // ✅ Show Notification on desktop/mobile
+    async function fireSystemNotification(title, message) {
+      if (!("Notification" in window)) return;
+
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          reg.showNotification(title, {
+            body: message,
+            icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+            vibrate: [100, 50, 100],
+            tag: "water-alert"
+          });
+        }
+      }
+    }
+
+    // ✅ Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register("sw.js")
+        .then(() => console.log("✅ Service Worker registered."))
+        .catch(err => console.error("❌ SW error:", err));
     }
   </script>
 </body>
