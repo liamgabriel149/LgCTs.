@@ -198,26 +198,31 @@
   <div id="alertBox" class="alert">🚨 Water flow detected while switch is OFF!</div>
 
   <script>
-    // Firebase config
-    const firebaseConfig = {
+    // Sensor Firebase App
+    const sensorApp = firebase.initializeApp({
       apiKey: "AIzaSyDXNrUVM1VBaXOg2ZmkIFE9BKxexxBmpIs",
       authDomain: "waterbase-b1393.firebaseapp.com",
       databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/",
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    }, "sensorApp");
+    const sensorDB = sensorApp.database();
 
-    // Paths from localStorage
+    // User Firebase App
+    const userApp = firebase.initializeApp({
+      databaseURL: "https://log-in-data-ca0c3-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    }, "userApp");
+    const userDB = userApp.database();
+
     const sensorPath = localStorage.getItem("sensorPath") || "/sensors1/water_timer_counter/value";
     const logPath    = localStorage.getItem("logPath")    || "/sensors1/water_timer_counter/logs";
     const switchPath = localStorage.getItem("switchPath") || "/sensors1/control_switch/value";
     const alertPath  = localStorage.getItem("alertPath")  || "/sensors1/water_alerts";
-    const username = localStorage.getItem("username") || "Residence";
-    document.getElementById("welcomeMessage").innerText = `Welcome, ${username}`;
+    const username   = localStorage.getItem("username")   || "Residence";
 
-    const switchRef = db.ref(switchPath);
-    const alertsRef = db.ref(alertPath);
-    const lastSeenRef = db.ref(`/users/${username}/lastSeen`);
+    document.getElementById("welcomeMessage").innerText = `Welcome, ${username}`;
+    const switchRef = sensorDB.ref(switchPath);
+    const alertsRef = sensorDB.ref(alertPath);
+    const lastSeenRef = userDB.ref(`/users/${username}/lastSeen`);
+
     const switchStatus = document.getElementById("switchStatus");
     const toggleBtn = document.getElementById("toggleBtn");
     const alertBox = document.getElementById("alertBox");
@@ -228,6 +233,7 @@
     let lastSeenTimestamp = 0;
     let unseenCount = 0;
     let lastValue = null;
+
     notifCount.innerText = unseenCount;
 
     lastSeenRef.once("value").then(snap => {
@@ -245,7 +251,7 @@
       }
     }
 
-    switchRef.on("value", (snapshot) => {
+    switchRef.on("value", snapshot => {
       const isOn = snapshot.val();
       switchStatus.innerText = isOn ? "ON" : "OFF";
       toggleBtn.innerText = isOn ? "Turn OFF" : "Turn ON";
@@ -258,7 +264,7 @@
       });
     });
 
-    db.ref(sensorPath).on("value", (snap) => {
+    sensorDB.ref(sensorPath).on("value", snap => {
       const val = snap.val() || 0;
       document.getElementById("counterDisplay").innerText = String(val).padStart(5, '0');
 
@@ -286,18 +292,16 @@
       lastValue = val;
     });
 
-    alertsRef.on("child_added", (snapshot) => {
+    alertsRef.on("child_added", snapshot => {
       const alert = snapshot.val();
       const key = snapshot.key;
 
       if (alert.timestamp > lastSeenTimestamp) {
         unseenCount++;
         notifCount.innerText = unseenCount;
-
         alertBox.style.display = "block";
         alertBox.innerText = `🚨 ${alert.message} (Pulses: ${alert.pulses})`;
         setTimeout(() => { alertBox.style.display = "none"; }, 5000);
-
         fireSystemNotification(`🚨 ${alert.message}`, `Pulses: ${alert.pulses}`);
       }
 
@@ -307,7 +311,7 @@
     });
 
     function deleteNotif(key, btn) {
-      db.ref(`${alertPath}/${key}`).remove().then(() => {
+      sensorDB.ref(`${alertPath}/${key}`).remove().then(() => {
         btn.parentElement.remove();
       });
     }
