@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- MOBILE SCALING -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
   <style>
     * { box-sizing: border-box; }
@@ -86,7 +86,6 @@
     .actions .edit { background: #ffc107; }
     .actions .delete { background: #e74c3c; }
 
-    /* ✅ MOBILE STYLE */
     @media (max-width: 600px) {
       .container {
         padding: 1rem;
@@ -131,11 +130,18 @@
         <option value="employee">Employee</option>
         <option value="residence">Residence</option>
       </select>
-      <input type="text" id="sensorPath" placeholder="Sensor Path for residence" style="display:none;"/>
-      <input type="text" id="logPath" placeholder="Log Path for residence" style="display:none;"/>
+
+      <div id="residencePaths" style="display: none;">
+        <input type="text" id="sensorPath" placeholder="Sensor Path (e.g., /sensors2/water_timer_counter/value)" />
+        <input type="text" id="logPath" placeholder="Log Path (e.g., /sensors2/water_timer_counter/logs)" />
+        <input type="text" id="switchPath" placeholder="Switch Path (e.g., /sensors2/control_switch/value)" />
+        <input type="text" id="alertPath" placeholder="Alert Path (e.g., /sensors2/water_alerts)" />
+      </div>
+
       <button type="submit">Save Account</button>
     </form>
     <div class="success" id="messageBox"></div>
+
     <div class="filter-bar">
       <select id="roleFilter">
         <option value="all">All Roles</option>
@@ -148,15 +154,16 @@
   </div>
 
 <script>
-  const config = { databaseURL: "https://log-in-data-ca0c3-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+  const config = {
+    databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  };
   firebase.initializeApp(config);
   const db = firebase.database();
   let editUserId = null, usersData = {};
 
   document.getElementById("role").addEventListener("change", e => {
     const show = e.target.value === "residence";
-    document.getElementById("sensorPath").style.display = show ? "block" : "none";
-    document.getElementById("logPath").style.display = show ? "block" : "none";
+    document.getElementById("residencePaths").style.display = show ? "block" : "none";
   });
 
   document.getElementById("userForm").addEventListener("submit", e => {
@@ -164,30 +171,75 @@
     const u = document.getElementById("username").value.trim();
     const p = document.getElementById("password").value.trim();
     const r = document.getElementById("role").value;
+
     const sp = document.getElementById("sensorPath").value.trim();
     const lp = document.getElementById("logPath").value.trim();
+    const sw = document.getElementById("switchPath").value.trim();
+    const ap = document.getElementById("alertPath").value.trim();
+
     if (!u || !p || !r) return showMsg("❌ All fields are required");
-    const userData = { username:u, password:p, role:r };
+
+    const userData = { username: u, password: p, role: r };
+
     if (r === "residence") {
-      if (!sp || !lp) return showMsg("❌ Paths required for residence");
-      userData.sensorPath = sp; userData.logPath = lp;
+      if (!sp || !lp || !sw || !ap) return showMsg("❌ All residence paths are required");
+      userData.sensorPath = sp;
+      userData.logPath = lp;
+      userData.switchPath = sw;
+      userData.alertPath = ap;
     }
-    const ref = editUserId ? db.ref("users/"+editUserId) : db.ref("users").push();
+
+    const ref = editUserId ? db.ref("users/" + editUserId) : db.ref("users").push();
     ref.set(userData).then(() => {
-      showMsg("✅ Account saved");
+      if (r === "residence") {
+        const sensorRoot = sp.split("/")[1];
+        if (sensorRoot) {
+          const sensorData = {
+            water_timer_counter: {
+              value: 0,
+              logs: {
+                exampleLog1: {
+                  timestamp: Date.now(),
+                  pulses: 5
+                },
+                exampleLog2: {
+                  timestamp: Date.now() + 10000,
+                  pulses: 8
+                }
+              }
+            },
+            control_switch: {
+              value: true
+            },
+            water_alerts: {
+              "-Nl123abc": {
+                message: "Water leak detected",
+                pulses: 14,
+                timestamp: Date.now()
+              }
+            }
+          };
+          db.ref(sensorRoot).set(sensorData);
+        }
+      }
+
+      showMsg("✅ Account and sensor data saved");
       document.getElementById("userForm").reset();
-      editUserId=null;
-      document.getElementById("sensorPath").style.display="none";
-      document.getElementById("logPath").style.display="none";
+      editUserId = null;
+      document.getElementById("residencePaths").style.display = "none";
       loadUsers();
     });
   });
 
-  function showMsg(msg) { document.getElementById("messageBox").innerText=msg; }
+  function showMsg(msg) {
+    document.getElementById("messageBox").innerText = msg;
+  }
 
   function loadUsers() {
-    db.ref("users").once("value")
-      .then(snap => { usersData = snap.val()||{}; renderUsers(); });
+    db.ref("users").once("value").then(snap => {
+      usersData = snap.val() || {};
+      renderUsers();
+    });
   }
 
   function renderUsers() {
@@ -195,14 +247,18 @@
     const rf = document.getElementById("roleFilter").value;
     const sw = document.getElementById("searchInput").value.toLowerCase();
     userList.innerHTML = "<h3>Registered Users:</h3>";
-    let found=0;
+    let found = 0;
     for (const id in usersData) {
       const u = usersData[id];
-      if ((rf==="all"||u.role===rf) && u.username.toLowerCase().includes(sw)) {
+      if ((rf === "all" || u.role === rf) && u.username.toLowerCase().includes(sw)) {
         found++;
-        const info = u.role==="residence"
-          ? `<div style="font-size:12px;opacity:0.6">📡 ${u.sensorPath}<br>📝 ${u.logPath}</div>`
-          : "";
+        const info = u.role === "residence" ? `
+          <div style="font-size:12px;opacity:0.6">
+            📡 Sensor: ${u.sensorPath}<br>
+            📝 Log: ${u.logPath}<br>
+            🔌 Switch: ${u.switchPath}<br>
+            🚨 Alert: ${u.alertPath}
+          </div>` : "";
         userList.innerHTML += `
 <div class="user-item">
   <span><strong>${u.username}</strong> (${u.role})</span>
@@ -220,27 +276,31 @@
 
   function editUser(id) {
     const u = usersData[id];
-    document.getElementById("username").value=u.username;
-    document.getElementById("password").value=u.password;
-    document.getElementById("role").value=u.role;
-    document.getElementById("sensorPath").value=u.sensorPath||"";
-    document.getElementById("logPath").value=u.logPath||"";
-    editUserId=id;
+    document.getElementById("username").value = u.username;
+    document.getElementById("password").value = u.password;
+    document.getElementById("role").value = u.role;
+    document.getElementById("sensorPath").value = u.sensorPath || "";
+    document.getElementById("logPath").value = u.logPath || "";
+    document.getElementById("switchPath").value = u.switchPath || "";
+    document.getElementById("alertPath").value = u.alertPath || "";
+    editUserId = id;
     showMsg("✏️ Editing user...");
-    const ev = new Event('change');
-    document.getElementById("role").dispatchEvent(ev);
+    document.getElementById("residencePaths").style.display = u.role === "residence" ? "block" : "none";
   }
 
   function deleteUser(id) {
     if (confirm("Delete this user?")) {
-      db.ref("users/"+id).remove().then(() => {
+      db.ref("users/" + id).remove().then(() => {
         showMsg("🗑️ Deleted");
         loadUsers();
       });
     }
   }
 
-  function logout() { localStorage.clear(); window.location.href="index.html"; }
+  function logout() {
+    localStorage.clear();
+    window.location.href = "index.html";
+  }
 
   document.getElementById("roleFilter").addEventListener("change", renderUsers);
   document.getElementById("searchInput").addEventListener("input", renderUsers);
