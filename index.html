@@ -14,13 +14,10 @@
       font-family: 'Segoe UI', sans-serif;
     }
 
-    /* Background video styling */
     #bg-video {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
       object-fit: cover;
       z-index: -1;
     }
@@ -98,8 +95,8 @@
   <div class="login-box">
     <h2>Login</h2>
     <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required/>
-      <input type="password" id="password" placeholder="Password" required/>
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
       <button type="submit">Log In</button>
     </form>
     <div class="error" id="errorMsg"></div>
@@ -107,7 +104,7 @@
 
   <!-- JavaScript -->
   <script>
-    const firebaseURL = "https://log-in-data-ca0c3-default-rtdb.asia-southeast1.firebasedatabase.app/users.json";
+    const firebaseURL = "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/users.json";
 
     document.getElementById("loginForm").addEventListener("submit", e => {
       e.preventDefault();
@@ -130,6 +127,8 @@
               if (user.role === "residence") {
                 localStorage.setItem("sensorPath", user.sensorPath || "");
                 localStorage.setItem("logPath", user.logPath || "");
+                localStorage.setItem("switchPath", user.switchPath || "");
+                localStorage.setItem("alertPath", user.alertPath || "");
               }
               window.location.href = `${user.role}_dashboard.html`;
               break;
@@ -137,7 +136,7 @@
           }
           if (!found) errorMsg.innerText = "Invalid username or password.";
         })
-        .catch(err => {
+        .catch(() => {
           errorMsg.innerText = "Connection error.";
         });
     });
