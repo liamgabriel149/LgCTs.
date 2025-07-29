@@ -198,6 +198,7 @@
   <div id="alertBox" class="alert">🚨 Water flow detected while switch is OFF!</div>
 
   <script>
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDXNrUVM1VBaXOg2ZmkIFE9BKxexxBmpIs",
       authDomain: "waterbase-b1393.firebaseapp.com",
@@ -206,15 +207,17 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const path = localStorage.getItem("sensorPath") || "/sensors1/water_timer_counter/value";
+    // Paths from localStorage
+    const sensorPath = localStorage.getItem("sensorPath") || "/sensors1/water_timer_counter/value";
+    const logPath    = localStorage.getItem("logPath")    || "/sensors1/water_timer_counter/logs";
+    const switchPath = localStorage.getItem("switchPath") || "/sensors1/control_switch/value";
+    const alertPath  = localStorage.getItem("alertPath")  || "/sensors1/water_alerts";
     const username = localStorage.getItem("username") || "Residence";
     document.getElementById("welcomeMessage").innerText = `Welcome, ${username}`;
 
-    const switchRef = db.ref("/sensors1/control_switch/value");
-    const alertsRef = db.ref("/sensors1/water_alerts");
-    const userPath = `/users/${username}`;
-    const lastSeenRef = db.ref(`${userPath}/lastSeen`);
-
+    const switchRef = db.ref(switchPath);
+    const alertsRef = db.ref(alertPath);
+    const lastSeenRef = db.ref(`/users/${username}/lastSeen`);
     const switchStatus = document.getElementById("switchStatus");
     const toggleBtn = document.getElementById("toggleBtn");
     const alertBox = document.getElementById("alertBox");
@@ -225,7 +228,6 @@
     let lastSeenTimestamp = 0;
     let unseenCount = 0;
     let lastValue = null;
-
     notifCount.innerText = unseenCount;
 
     lastSeenRef.once("value").then(snap => {
@@ -256,7 +258,7 @@
       });
     });
 
-    firebase.database().ref(path).on("value", (snap) => {
+    db.ref(sensorPath).on("value", (snap) => {
       const val = snap.val() || 0;
       document.getElementById("counterDisplay").innerText = String(val).padStart(5, '0');
 
@@ -305,7 +307,7 @@
     });
 
     function deleteNotif(key, btn) {
-      db.ref(`/sensors1/water_alerts/${key}`).remove().then(() => {
+      db.ref(`${alertPath}/${key}`).remove().then(() => {
         btn.parentElement.remove();
       });
     }
