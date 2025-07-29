@@ -198,75 +198,60 @@
   <div id="alertBox" class="alert">🚨 Water flow detected while switch is OFF!</div>
 
   <script>
-    // Sensor Firebase App
     const sensorApp = firebase.initializeApp({
-      apiKey: "AIzaSyDXNrUVM1VBaXOg2ZmkIFE9BKxexxBmpIs",
-      authDomain: "waterbase-b1393.firebaseapp.com",
-      databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
     }, "sensorApp");
-    const sensorDB = sensorApp.database();
-
-    // User Firebase App
     const userApp = firebase.initializeApp({
       databaseURL: "https://log-in-data-ca0c3-default-rtdb.asia-southeast1.firebasedatabase.app/"
     }, "userApp");
+
+    const sensorDB = sensorApp.database();
     const userDB = userApp.database();
 
-    const sensorPath = localStorage.getItem("sensorPath") || "/sensors1/water_timer_counter/value";
-    const logPath    = localStorage.getItem("logPath")    || "/sensors1/water_timer_counter/logs";
-    const switchPath = localStorage.getItem("switchPath") || "/sensors1/control_switch/value";
-    const alertPath  = localStorage.getItem("alertPath")  || "/sensors1/water_alerts";
-    const username   = localStorage.getItem("username")   || "Residence";
-
+    const username = localStorage.getItem("username") || "Residence";
     document.getElementById("welcomeMessage").innerText = `Welcome, ${username}`;
-    const switchRef = sensorDB.ref(switchPath);
-    const alertsRef = sensorDB.ref(alertPath);
-    const lastSeenRef = userDB.ref(`/users/${username}/lastSeen`);
 
-    const switchStatus = document.getElementById("switchStatus");
-    const toggleBtn = document.getElementById("toggleBtn");
-    const alertBox = document.getElementById("alertBox");
+    const sensorPath = localStorage.getItem("sensorPath") || "/sensors1/water_timer_counter/value";
+    const switchPath = localStorage.getItem("switchPath") || "/sensors1/control_switch/value";
+    const alertsRef = sensorDB.ref(`/user_alerts/${username}`);
+    const switchRef = sensorDB.ref(switchPath);
+
     const notifList = document.getElementById("notifList");
     const notifPopup = document.getElementById("notifPopup");
     const notifCount = document.getElementById("notifCount");
+    const counterDisplay = document.getElementById("counterDisplay");
+    const alertBox = document.getElementById("alertBox");
+    const switchStatus = document.getElementById("switchStatus");
+    const toggleBtn = document.getElementById("toggleBtn");
 
-    let lastSeenTimestamp = 0;
     let unseenCount = 0;
-    let lastValue = null;
-
     notifCount.innerText = unseenCount;
-
-    lastSeenRef.once("value").then(snap => {
-      lastSeenTimestamp = snap.val() || 0;
-    });
 
     function toggleNotifPopup() {
       const isVisible = notifPopup.style.display === 'block';
       notifPopup.style.display = isVisible ? 'none' : 'block';
       if (!isVisible) {
-        lastSeenTimestamp = Date.now();
-        lastSeenRef.set(lastSeenTimestamp);
         unseenCount = 0;
-        notifCount.innerText = 0;
+        notifCount.innerText = unseenCount;
       }
     }
 
-    switchRef.on("value", snapshot => {
-      const isOn = snapshot.val();
+    switchRef.on("value", snap => {
+      const isOn = snap.val();
       switchStatus.innerText = isOn ? "ON" : "OFF";
       toggleBtn.innerText = isOn ? "Turn OFF" : "Turn ON";
     });
 
     toggleBtn.addEventListener("click", () => {
-      switchRef.get().then(snapshot => {
-        const current = snapshot.val();
-        switchRef.set(!current);
+      switchRef.once("value").then(snap => {
+        switchRef.set(!snap.val());
       });
     });
 
+    let lastValue = null;
     sensorDB.ref(sensorPath).on("value", snap => {
       const val = snap.val() || 0;
-      document.getElementById("counterDisplay").innerText = String(val).padStart(5, '0');
+      counterDisplay.innerText = String(val).padStart(5, '0');
 
       if (lastValue === null) {
         lastValue = val;
@@ -274,9 +259,8 @@
       }
 
       const lastAlerted = Number(localStorage.getItem("lastAlertedPulses")) || 0;
-
       if (val > lastValue) {
-        switchRef.get().then(snapshot => {
+        switchRef.once("value").then(snapshot => {
           const isOn = snapshot.val();
           if (!isOn && val !== lastAlerted) {
             const alertData = {
@@ -292,26 +276,24 @@
       lastValue = val;
     });
 
-    alertsRef.on("child_added", snapshot => {
-      const alert = snapshot.val();
-      const key = snapshot.key;
+    alertsRef.on("child_added", snap => {
+      const alert = snap.val();
+      unseenCount++;
+      notifCount.innerText = unseenCount;
 
-      if (alert.timestamp > lastSeenTimestamp) {
-        unseenCount++;
-        notifCount.innerText = unseenCount;
-        alertBox.style.display = "block";
-        alertBox.innerText = `🚨 ${alert.message} (Pulses: ${alert.pulses})`;
-        setTimeout(() => { alertBox.style.display = "none"; }, 5000);
-        fireSystemNotification(`🚨 ${alert.message}`, `Pulses: ${alert.pulses}`);
-      }
+      alertBox.style.display = "block";
+      alertBox.innerText = `🚨 ${alert.message} (Pulses: ${alert.pulses})`;
+      setTimeout(() => alertBox.style.display = "none", 5000);
 
-      const notifItem = document.createElement("li");
-      notifItem.innerHTML = `${alert.message} at ${new Date(alert.timestamp).toLocaleTimeString()} <button onclick="deleteNotif('${key}', this)">Delete</button>`;
-      notifList.prepend(notifItem);
+      fireSystemNotification(`🚨 ${alert.message}`, `Pulses: ${alert.pulses}`);
+
+      const li = document.createElement("li");
+      li.innerHTML = `${alert.message} at ${new Date(alert.timestamp).toLocaleTimeString()} <button onclick="deleteNotif('${snap.key}', this)">Delete</button>`;
+      notifList.prepend(li);
     });
 
     function deleteNotif(key, btn) {
-      sensorDB.ref(`${alertPath}/${key}`).remove().then(() => {
+      alertsRef.child(key).remove().then(() => {
         btn.parentElement.remove();
       });
     }
@@ -321,23 +303,19 @@
       window.location.href = "index.html";
     }
 
-    async function fireSystemNotification(title, message) {
+    async function fireSystemNotification(title, body) {
       if (!("Notification" in window)) return;
       if (Notification.permission === "granted") {
         const reg = await navigator.serviceWorker.getRegistration();
-        if (reg) {
-          reg.showNotification(title, {
-            body: message,
-            icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
-            vibrate: [100, 50, 100],
-            tag: "water-alert"
-          });
-        }
+        if (reg) reg.showNotification(title, {
+          body,
+          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+          vibrate: [100, 50, 100],
+          tag: "water-alert"
+        });
       } else if (Notification.permission === "default") {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          fireSystemNotification(title, message);
-        }
+        const perm = await Notification.requestPermission();
+        if (perm === "granted") fireSystemNotification(title, body);
       }
     }
 
