@@ -199,14 +199,14 @@
 
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyC5BGq4Av8dc207kKWiJxlSL6KWfdG3XRc",
-      authDomain: "liam-5c1d5.firebaseapp.com",
-      databaseURL: "https://liam-5c1d5-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      apiKey: "AIzaSyDXNrUVM1VBaXOg2ZmkIFE9BKxexxBmpIs",
+      authDomain: "waterbase-b1393.firebaseapp.com",
+      databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/",
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const path = localStorage.getItem("sensorPath") || "/sensors1/default/value";
+    const path = localStorage.getItem("sensorPath") || "/sensors1/water_timer_counter/value";
     const username = localStorage.getItem("username") || "Residence";
     document.getElementById("welcomeMessage").innerText = `Welcome, ${username}`;
 
@@ -224,7 +224,7 @@
 
     let lastSeenTimestamp = 0;
     let unseenCount = 0;
-    let lastValue = null; // will set only after first read
+    let lastValue = null;
 
     notifCount.innerText = unseenCount;
 
@@ -261,7 +261,7 @@
       document.getElementById("counterDisplay").innerText = String(val).padStart(5, '0');
 
       if (lastValue === null) {
-        lastValue = val; // skip first read to prevent false alert
+        lastValue = val;
         return;
       }
 
