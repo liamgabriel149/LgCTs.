@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard</title>
   <style>
     * { box-sizing: border-box; }
@@ -87,9 +87,7 @@
     .actions .delete { background: #e74c3c; }
 
     @media (max-width: 600px) {
-      .container {
-        padding: 1rem;
-      }
+      .container { padding: 1rem; }
       .user-item {
         flex-direction: column;
         align-items: flex-start;
@@ -113,7 +111,7 @@
     }
   </style>
 
-  <!-- Firebase -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
@@ -153,159 +151,153 @@
     <div class="user-list" id="userList"></div>
   </div>
 
-<script>
-  const config = {
-    databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
-  };
-  firebase.initializeApp(config);
-  const db = firebase.database();
-  let editUserId = null, usersData = {};
+  <script>
+    // Initialize Firebase App 1: For Users
+    const userApp = firebase.initializeApp({
+      databaseURL: "https://log-in-data-ca0c3-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    }, "userApp");
+    const userDB = userApp.database();
 
-  document.getElementById("role").addEventListener("change", e => {
-    const show = e.target.value === "residence";
-    document.getElementById("residencePaths").style.display = show ? "block" : "none";
-  });
+    // Initialize Firebase App 2: For Sensor Paths
+    const sensorApp = firebase.initializeApp({
+      databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    }, "sensorApp");
+    const sensorDB = sensorApp.database();
 
-  document.getElementById("userForm").addEventListener("submit", e => {
-    e.preventDefault();
-    const u = document.getElementById("username").value.trim();
-    const p = document.getElementById("password").value.trim();
-    const r = document.getElementById("role").value;
+    let editUserId = null, usersData = {};
 
-    const sp = document.getElementById("sensorPath").value.trim();
-    const lp = document.getElementById("logPath").value.trim();
-    const sw = document.getElementById("switchPath").value.trim();
-    const ap = document.getElementById("alertPath").value.trim();
+    document.getElementById("role").addEventListener("change", e => {
+      document.getElementById("residencePaths").style.display = e.target.value === "residence" ? "block" : "none";
+    });
 
-    if (!u || !p || !r) return showMsg("❌ All fields are required");
+    document.getElementById("userForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value.trim();
+      const r = document.getElementById("role").value;
 
-    const userData = { username: u, password: p, role: r };
+      const sp = document.getElementById("sensorPath").value.trim();
+      const lp = document.getElementById("logPath").value.trim();
+      const sw = document.getElementById("switchPath").value.trim();
+      const ap = document.getElementById("alertPath").value.trim();
 
-    if (r === "residence") {
-      if (!sp || !lp || !sw || !ap) return showMsg("❌ All residence paths are required");
-      userData.sensorPath = sp;
-      userData.logPath = lp;
-      userData.switchPath = sw;
-      userData.alertPath = ap;
-    }
+      if (!u || !p || !r) return showMsg("❌ All fields are required");
 
-    const ref = editUserId ? db.ref("users/" + editUserId) : db.ref("users").push();
-    ref.set(userData).then(() => {
+      const userData = { username: u, password: p, role: r };
       if (r === "residence") {
-        const sensorRoot = sp.split("/")[1];
-        if (sensorRoot) {
-          const sensorData = {
-            water_timer_counter: {
-              value: 0,
-              logs: {
-                exampleLog1: {
-                  timestamp: Date.now(),
-                  pulses: 5
-                },
-                exampleLog2: {
-                  timestamp: Date.now() + 10000,
-                  pulses: 8
+        if (!sp || !lp || !sw || !ap) return showMsg("❌ All residence paths are required");
+        Object.assign(userData, { sensorPath: sp, logPath: lp, switchPath: sw, alertPath: ap });
+      }
+
+      const ref = editUserId ? userDB.ref("users/" + editUserId) : userDB.ref("users").push();
+      ref.set(userData).then(() => {
+        if (r === "residence") {
+          const sensorRoot = sp.split("/")[1];
+          if (sensorRoot) {
+            const sensorData = {
+              water_timer_counter: {
+                value: 0,
+                logs: {
+                  exampleLog1: { timestamp: Date.now(), pulses: 5 },
+                  exampleLog2: { timestamp: Date.now() + 10000, pulses: 8 }
+                }
+              },
+              control_switch: { value: true },
+              water_alerts: {
+                "-Nl123abc": {
+                  message: "Water leak detected",
+                  pulses: 14,
+                  timestamp: Date.now()
                 }
               }
-            },
-            control_switch: {
-              value: true
-            },
-            water_alerts: {
-              "-Nl123abc": {
-                message: "Water leak detected",
-                pulses: 14,
-                timestamp: Date.now()
-              }
-            }
-          };
-          db.ref(sensorRoot).set(sensorData);
+            };
+            sensorDB.ref(sensorRoot).set(sensorData);
+          }
         }
-      }
 
-      showMsg("✅ Account and sensor data saved");
-      document.getElementById("userForm").reset();
-      editUserId = null;
-      document.getElementById("residencePaths").style.display = "none";
-      loadUsers();
-    });
-  });
-
-  function showMsg(msg) {
-    document.getElementById("messageBox").innerText = msg;
-  }
-
-  function loadUsers() {
-    db.ref("users").once("value").then(snap => {
-      usersData = snap.val() || {};
-      renderUsers();
-    });
-  }
-
-  function renderUsers() {
-    const userList = document.getElementById("userList");
-    const rf = document.getElementById("roleFilter").value;
-    const sw = document.getElementById("searchInput").value.toLowerCase();
-    userList.innerHTML = "<h3>Registered Users:</h3>";
-    let found = 0;
-    for (const id in usersData) {
-      const u = usersData[id];
-      if ((rf === "all" || u.role === rf) && u.username.toLowerCase().includes(sw)) {
-        found++;
-        const info = u.role === "residence" ? `
-          <div style="font-size:12px;opacity:0.6">
-            📡 Sensor: ${u.sensorPath}<br>
-            📝 Log: ${u.logPath}<br>
-            🔌 Switch: ${u.switchPath}<br>
-            🚨 Alert: ${u.alertPath}
-          </div>` : "";
-        userList.innerHTML += `
-<div class="user-item">
-  <span><strong>${u.username}</strong> (${u.role})</span>
-  <span style="opacity:0.6">${u.password}</span>
-  ${info}
-  <div class="actions">
-    <button class="edit" onclick="editUser('${id}')">Edit</button>
-    <button class="delete" onclick="deleteUser('${id}')">Delete</button>
-  </div>
-</div>`;
-      }
-    }
-    if (!found) userList.innerHTML += "<p>No users found.</p>";
-  }
-
-  function editUser(id) {
-    const u = usersData[id];
-    document.getElementById("username").value = u.username;
-    document.getElementById("password").value = u.password;
-    document.getElementById("role").value = u.role;
-    document.getElementById("sensorPath").value = u.sensorPath || "";
-    document.getElementById("logPath").value = u.logPath || "";
-    document.getElementById("switchPath").value = u.switchPath || "";
-    document.getElementById("alertPath").value = u.alertPath || "";
-    editUserId = id;
-    showMsg("✏️ Editing user...");
-    document.getElementById("residencePaths").style.display = u.role === "residence" ? "block" : "none";
-  }
-
-  function deleteUser(id) {
-    if (confirm("Delete this user?")) {
-      db.ref("users/" + id).remove().then(() => {
-        showMsg("🗑️ Deleted");
+        showMsg("✅ Account and sensor data saved");
+        document.getElementById("userForm").reset();
+        editUserId = null;
+        document.getElementById("residencePaths").style.display = "none";
         loadUsers();
       });
+    });
+
+    function showMsg(msg) {
+      document.getElementById("messageBox").innerText = msg;
     }
-  }
 
-  function logout() {
-    localStorage.clear();
-    window.location.href = "index.html";
-  }
+    function loadUsers() {
+      userDB.ref("users").once("value").then(snap => {
+        usersData = snap.val() || {};
+        renderUsers();
+      });
+    }
 
-  document.getElementById("roleFilter").addEventListener("change", renderUsers);
-  document.getElementById("searchInput").addEventListener("input", renderUsers);
+    function renderUsers() {
+      const userList = document.getElementById("userList");
+      const rf = document.getElementById("roleFilter").value;
+      const sw = document.getElementById("searchInput").value.toLowerCase();
+      userList.innerHTML = "<h3>Registered Users:</h3>";
+      let found = 0;
+      for (const id in usersData) {
+        const u = usersData[id];
+        if ((rf === "all" || u.role === rf) && u.username.toLowerCase().includes(sw)) {
+          found++;
+          const info = u.role === "residence" ? `
+            <div style="font-size:12px;opacity:0.6">
+              📡 Sensor: ${u.sensorPath}<br>
+              📝 Log: ${u.logPath}<br>
+              🔌 Switch: ${u.switchPath}<br>
+              🚨 Alert: ${u.alertPath}
+            </div>` : "";
+          userList.innerHTML += `
+            <div class="user-item">
+              <span><strong>${u.username}</strong> (${u.role})</span>
+              <span style="opacity:0.6">${u.password}</span>
+              ${info}
+              <div class="actions">
+                <button class="edit" onclick="editUser('${id}')">Edit</button>
+                <button class="delete" onclick="deleteUser('${id}')">Delete</button>
+              </div>
+            </div>`;
+        }
+      }
+      if (!found) userList.innerHTML += "<p>No users found.</p>";
+    }
 
-  loadUsers();
-</script>
+    function editUser(id) {
+      const u = usersData[id];
+      document.getElementById("username").value = u.username;
+      document.getElementById("password").value = u.password;
+      document.getElementById("role").value = u.role;
+      document.getElementById("sensorPath").value = u.sensorPath || "";
+      document.getElementById("logPath").value = u.logPath || "";
+      document.getElementById("switchPath").value = u.switchPath || "";
+      document.getElementById("alertPath").value = u.alertPath || "";
+      editUserId = id;
+      showMsg("✏️ Editing user...");
+      document.getElementById("residencePaths").style.display = u.role === "residence" ? "block" : "none";
+    }
+
+    function deleteUser(id) {
+      if (confirm("Delete this user?")) {
+        userDB.ref("users/" + id).remove().then(() => {
+          showMsg("🗑️ Deleted");
+          loadUsers();
+        });
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+
+    document.getElementById("roleFilter").addEventListener("change", renderUsers);
+    document.getElementById("searchInput").addEventListener("input", renderUsers);
+
+    loadUsers();
+  </script>
 </body>
 </html>
