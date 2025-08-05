@@ -1,0 +1,189 @@
+{
+  "sensors1": {
+    "control_switch": {
+      "value": true
+    },
+    "water_alerts": {
+      "-OSYO-7G3zGfYw19JqpA": {
+        "message": "Water leak detected",
+        "pulses": 14,
+        "timestamp": 1754377788642
+      }
+    },
+    "water_timer_counter": {
+      "logs": {
+        "exampleLog1": {
+          "pulses": 5,
+          "timestamp": 1754377788642
+        },
+        "exampleLog2": {
+          "pulses": 8,
+          "timestamp": 1754377798642
+        }
+      },
+      "value": 0
+    }
+  },
+  "users": {
+    "7": {
+      "lastSeen": 1753803581018
+    },
+    "-OSYEBjrIO9nWkJXTVU_": {
+      "username": "Liam",
+      "password": "liam",
+      "role": "admin"
+    },
+    "-OSYFDO2e4Mud0Rz85Bu": {
+      "username": "admin123",
+      "password": "123",
+      "role": "admin"
+    },
+    "-OSYFZrmTnp4H5uX3BSV": {
+      "username": "cirilo",
+      "password": "cirilo",
+      "role": "employee"
+    },
+    "-OSYNW_5naiXy71qaQwL": {
+      "username": "tristan",
+      "password": "tristan",
+      "role": "employee"
+    },
+    "-OSYO-7G3zGfYw19JqpA": {
+      "username": "liam",
+      "password": "liam",
+      "role": "residence",
+      "alertPath": "sensors1/water_alerts",
+      "logPath": "sensors1/water_timer_counter/logs",
+      "sensorPath": "sensors1/water_timer_counter/value",
+      "switchPath": "sensors1/control_switch/value"
+    },
+    "-OTRXECmlWaPnMiQGdUd": {
+      "username": "employee1",
+      "password": "1",
+      "role": "employee"
+    },
+    "-OTS1SIv7f-rNDO4Kqdm": {
+      "username": "liam_gabriel",
+      "password": "Liam gabriel",
+      "role": "employee"
+    },
+    "-OWLndI7IgXJEVnNzkbR": {
+      "username": "employee22",
+      "password": "22",
+      "role": "employee"
+    },
+    "-OWO-KM3oUPEWHIQ7nTv": {
+      "username": "tris",
+      "password": "tris",
+      "role": "residence",
+      "alertPath": "sensors9/water9_alerts",
+      "logPath": "sensors9/water9_timer_counter/logs",
+      "sensorPath": "sensors9/water9_timer_counter/value",
+      "switchPath": "sensors9/water9_timer_counter/logs"
+    },
+    "-OWOQf7x6rfxFniQWxHD": {
+      "username": "liam2",
+      "password": "liam2",
+      "role": "residence",
+      "alertPath": "sensors1/water_alerts",
+      "logPath": "sensors1/water_timer_counter/logs",
+      "sensorPath": "sensors1/water_timer_counter/value",
+      "switchPath": "sensors1/control_switch/value"
+    },
+    "-OWOU4X2MKJ9Aud7iJ1w": {
+      "username": "liam3",
+      "password": "liam3",
+      "role": "residence",
+      "alertPath": "sensors3/water_alerts",
+      "logPath": "sensors3/water9_timer_counter/logs",
+      "sensorPath": "sensors3/water9_timer_counter/value",
+      "switchPath": "sensors3/water9_timer_counter/logs"
+    },
+    "-OWOXWruOVRPah8RFwJY": {
+      "username": "user4",
+      "password": "4",
+      "role": "residence",
+      "alertPath": "sensors3/water_alerts",
+      "logPath": "sensors3/water9_timer_counter/logs",
+      "sensorPath": "sensors3/water9_timer_counter/value",
+      "switchPath": "sensors3/water9_timer_counter/logs"
+    },
+    "-OWOXmsd6R3VBtq6OYux": {
+      "username": "user0",
+      "password": "0",
+      "role": "residence",
+      "alertPath": "sensors9/water9_alerts",
+      "logPath": "sensors5/water5_timer_counter/logs",
+      "sensorPath": "sensors5/water5_timer_counter/value",
+      "switchPath": "sensors5/control5_switch/value"
+    },
+    "-OWOY0WhzAkJqRcX2I3I": {
+      "username": "r",
+      "password": "r",
+      "role": "employee"
+    },
+    "-OWO_0rglzwb9VyReuv-": {
+      "username": "p",
+      "password": "p",
+      "role": "residence",
+      "alertPath": "sensors1/water_alerts",
+      "logPath": "sensors1/water_timer_counter/logs",
+      "sensorPath": "sensors1/water_timer_counter/value",
+      "switchPath": "sensors1/control_switch/value"
+    },
+    "-OWt2lggUYeq_FgapgaU": {
+      "username": "tries",
+      "password": "tries",
+      "role": "residence",
+      "alertPath": "sensors2/water_alerts",
+      "logPath": "sensors2/water_timer_counter/value",
+      "sensorPath": "sensors2/water_timer_counter/value",
+      "switchPath": "sensors2/control_switch"
+    },
+    "-OWt3-Iv2jKcazIPBtX7": {
+      "username": "user2",
+      "password": "2",
+      "role": "residence",
+      "alertPath": "sensors1/water_alerts",
+      "logPath": "sensors2/value",
+      "sensorPath": "sensors1/water_timer_counter/logs",
+      "switchPath": "sensors1/control_switch/value"
+    },
+    "-OWt391Peda7a_9bcaqv": {
+      "username": "user1_alt",
+      "password": "1",
+      "role": "residence",
+      "alertPath": "sensors1/water_alerts",
+      "logPath": "sensors2/liam/value",
+      "sensorPath": "sensors1/water_timer_counter/logs",
+      "switchPath": "sensors2/control_switch"
+    },
+    "-OWt3JZmjumPo5XtqT38": {
+      "username": "user1_multi",
+      "password": "1",
+      "role": "residence",
+      "alertPath": "sensors2/water_alerts",
+      "logPath": "sensors2/water2_timer_counter/value",
+      "sensorPath": "sensors2/water1_timer_counter/value",
+      "switchPath": "sensors2/control_switch/value"
+    },
+    "-OWt3ZrHJGsJpMWwNvx-": {
+      "username": "user3",
+      "password": "3",
+      "role": "residence",
+      "alertPath": "water_alerts",
+      "logPath": "water_timer_counter/value",
+      "sensorPath": "liam/value",
+      "switchPath": "control_switch"
+    },
+    "-OWt5rjZw34AY7s4D_n_": {
+      "username": "l",
+      "password": "l",
+      "role": "residence",
+      "alertPath": "sensors2/water_alerts",
+      "logPath": "sensors2/water_timer_counter/value",
+      "sensorPath": "sensors2/sensor/value",
+      "switchPath": "sensors2/control_switch"
+    }
+  }
+}
