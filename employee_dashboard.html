@@ -31,15 +31,15 @@
 
     input[type="text"],
     input[type="password"] {
-  width: calc(100% - 20px); /* Reduce space from right */
-  padding: 10px;
-  margin: 10px 0;
-  background-color: #2b2b2b;
-  border: none;
-  border-radius: 6px;
-  color: white;
-  font-size: 14px;
-}   
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #2b2b2b;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+    }   
 
     button {
       padding: 10px 20px;
@@ -129,7 +129,6 @@
       color: #b0e0e6;
     }
 
-    /* Responsive adjustments */
     @media (min-width: 768px) {
       body {
         padding: 40px;
@@ -149,20 +148,16 @@
         top: 10px;
         left: 10px;
       }
-
       .circle-meter {
         width: 120px;
         height: 120px;
       }
-
       .circle-meter .value {
         font-size: 24px;
       }
-
       .circle-meter .unit {
         font-size: 12px;
       }
-
       .username {
         font-size: 16px;
       }
@@ -192,18 +187,14 @@
   <button class="logout-btn" onclick="logout()">Logout</button>
 
   <script>
-    const userApp = firebase.initializeApp({
-      databaseURL: "https://log-in-data-ca0c3-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    }, "userApp");
+    // Single Firebase app for Waterbase DB
+    const app = firebase.initializeApp({
+      databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    });
 
-    const userDB = firebase.database(userApp);
+    const db = firebase.database(app);
 
-    const meterApp = firebase.initializeApp({
-      databaseURL: "https://liam-5c1d5-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    }, "meterApp");
-
-    const meterDB = firebase.database(meterApp);
-
+    // Add new residence account
     document.getElementById("residenceForm").addEventListener("submit", function (e) {
       e.preventDefault();
 
@@ -218,7 +209,7 @@
         sensorPath: sensorPath
       };
 
-      userDB.ref("users").push(newUser)
+      db.ref("users").push(newUser)
         .then(() => {
           alert("Residence account added!");
           document.getElementById("residenceForm").reset();
@@ -227,11 +218,12 @@
         .catch(err => alert("Error: " + err.message));
     });
 
+    // Load and display residence accounts
     function loadResidenceAccounts() {
       const list = document.getElementById("residenceList");
       list.innerHTML = "";
 
-      userDB.ref("users").once("value").then(snapshot => {
+      db.ref("users").once("value").then(snapshot => {
         snapshot.forEach(child => {
           const user = child.val();
           if (user.role === "residence") {
@@ -262,7 +254,8 @@
             card.appendChild(title);
             list.appendChild(card);
 
-            meterDB.ref(path).on("value", snap => {
+            // Listen for real-time changes in Waterbase DB
+            db.ref(path).on("value", snap => {
               const val = snap.val();
               valueEl.textContent = val ?? "0";
             }, () => {
@@ -273,12 +266,14 @@
       });
     }
 
+    // Logout function
     function logout() {
       localStorage.clear();
       sessionStorage.clear();
       window.location.replace("index.html");
     }
 
+    // Initial load
     loadResidenceAccounts();
   </script>
 </body>
