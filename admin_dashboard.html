@@ -152,17 +152,12 @@
   </div>
 
   <script>
-    // Initialize Firebase App 1: For Users
-    const userApp = firebase.initializeApp({
-      databaseURL: "https://log-in-data-ca0c3-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    }, "userApp");
-    const userDB = userApp.database();
-
-    // Initialize Firebase App 2: For Sensor Paths
-    const sensorApp = firebase.initializeApp({
+    // Initialize Firebase (one app only)
+    const firebaseConfig = {
       databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    }, "sensorApp");
-    const sensorDB = sensorApp.database();
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     let editUserId = null, usersData = {};
 
@@ -189,10 +184,10 @@
         Object.assign(userData, { sensorPath: sp, logPath: lp, switchPath: sw, alertPath: ap });
       }
 
-      const ref = editUserId ? userDB.ref("users/" + editUserId) : userDB.ref("users").push();
+      const ref = editUserId ? db.ref("users/" + editUserId) : db.ref("users").push();
       ref.set(userData).then(() => {
         if (r === "residence") {
-          const sensorRoot = sp.split("/")[1];
+          const sensorRoot = sp.split("/")[1]; // sensors2
           if (sensorRoot) {
             const sensorData = {
               water_timer_counter: {
@@ -211,7 +206,7 @@
                 }
               }
             };
-            sensorDB.ref(sensorRoot).set(sensorData);
+            db.ref(sensorRoot).set(sensorData);
           }
         }
 
@@ -228,7 +223,7 @@
     }
 
     function loadUsers() {
-      userDB.ref("users").once("value").then(snap => {
+      db.ref("users").once("value").then(snap => {
         usersData = snap.val() || {};
         renderUsers();
       });
@@ -282,7 +277,7 @@
 
     function deleteUser(id) {
       if (confirm("Delete this user?")) {
-        userDB.ref("users/" + id).remove().then(() => {
+        db.ref("users/" + id).remove().then(() => {
           showMsg("🗑️ Deleted");
           loadUsers();
         });
