@@ -11,289 +11,283 @@
 
   <!-- Styles -->
   <style>
-    /* ... your entire CSS styles ... */
-    /* COPY EVERYTHING FROM YOUR CSS ABOVE WITHOUT CHANGES */
-    /* For brevity, you can paste your existing CSS styles here */
-
     * {
-    box-sizing: border-box;
-  }
-  body {
-    margin: 0; 
-    background: #121212;
-    color: #eee;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 2rem 1rem 3rem;
-    min-height: 100vh;
-  }
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0; 
+      background: #121212;
+      color: #eee;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 3rem;
+      min-height: 100vh;
+    }
 
-  /* Top bar */
-  .top-bar {
-    width: 100%;
-    max-width: 960px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
+    /* Top bar */
+    .top-bar {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
 
-  /* Notification button */
-  .notif-button {
-    position: relative;
-    background: #1f2937;
-    border: 1.5px solid #4f46e5; /* indigo-600 */
-    color: #a5b4fc; /* indigo-300 */
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 0.6rem 1.2rem;
-    border-radius: 9999px;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.25s ease, color 0.25s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-  .notif-button:hover,
-  .notif-button:focus {
-    background: #4f46e5;
-    color: #eef2ff;
-    outline: none;
-  }
+    /* Notification button */
+    .notif-button {
+      position: relative;
+      background: #1f2937;
+      border: 1.5px solid #4f46e5; /* indigo-600 */
+      color: #a5b4fc; /* indigo-300 */
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .notif-button:hover,
+    .notif-button:focus {
+      background: #4f46e5;
+      color: #eef2ff;
+      outline: none;
+    }
 
-  /* Notification count badge */
-  .notif-count {
-    background: #ef4444; /* red-500 */
-    color: white;
-    font-weight: 700;
-    font-size: 0.75rem;
-    padding: 0.15rem 0.45rem;
-    border-radius: 9999px;
-    min-width: 1.3rem;
-    text-align: center;
-    line-height: 1;
-    user-select: none;
-  }
+    /* Notification count badge */
+    .notif-count {
+      background: #ef4444; /* red-500 */
+      color: white;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 9999px;
+      min-width: 1.3rem;
+      text-align: center;
+      line-height: 1;
+      user-select: none;
+    }
 
-  /* Notification popup */
-  .notif-popup {
-    position: absolute;
-    top: 3.4rem;
-    left: 0;
-    width: 320px;
-    max-height: 340px;
-    background: #1e293b; /* cool dark */
-    border-radius: 0.5rem;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.7);
-    overflow-y: auto;
-    padding: 0.8rem 0;
-    font-size: 0.9rem;
-    display: none;
-    z-index: 1000;
-  }
-  .notif-popup ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .notif-popup li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #cbd5e1;
-    padding: 0.5rem 1.2rem;
-    border-bottom: 1px solid #334155;
-  }
-  .notif-popup li button {
-    background: #ef4444;
-    border: none;
-    padding: 0.3rem 0.7rem;
-    border-radius: 0.4rem;
-    color: white;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  .notif-popup li button:hover {
-    background: #b91c1c;
-  }
+    /* Notification popup */
+    .notif-popup {
+      position: absolute;
+      top: 3.4rem;
+      left: 0;
+      width: 320px;
+      max-height: 340px;
+      background: #1e293b; /* cool dark */
+      border-radius: 0.5rem;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+      overflow-y: auto;
+      padding: 0.8rem 0;
+      font-size: 0.9rem;
+      display: none;
+      z-index: 1000;
+    }
+    .notif-popup ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .notif-popup li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #cbd5e1;
+      padding: 0.5rem 1.2rem;
+      border-bottom: 1px solid #334155;
+    }
+    .notif-popup li button {
+      background: #ef4444;
+      border: none;
+      padding: 0.3rem 0.7rem;
+      border-radius: 0.4rem;
+      color: white;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .notif-popup li button:hover {
+      background: #b91c1c;
+    }
 
-  /* Logout button */
-  .logout-button {
-    margin-left: auto;
-    background: #dc2626; /* red-600 */
-    border: none;
-    padding: 0.7rem 1.5rem;
-    font-size: 1rem;
-    color: #fff;
-    border-radius: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 6px 12px rgb(220 38 38 / 0.6);
-    transition: background-color 0.3s ease;
-  }
-  .logout-button:hover,
-  .logout-button:focus {
-    background: #b91c1c;
-    outline: none;
-  }
+    /* Logout button */
+    .logout-button {
+      margin-left: auto;
+      background: #dc2626; /* red-600 */
+      border: none;
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      color: #fff;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 12px rgb(220 38 38 / 0.6);
+      transition: background-color 0.3s ease;
+    }
+    .logout-button:hover,
+    .logout-button:focus {
+      background: #b91c1c;
+      outline: none;
+    }
 
-  /* Heading */
-  h1#welcomeMessage {
-    font-weight: 700;
-    font-size: 2.25rem;
-    margin-bottom: 3rem;
-    color: #6366f1; /* indigo-400 */
-    user-select: none;
-    text-align: center;
-  }
+    /* Heading */
+    h1#welcomeMessage {
+      font-weight: 700;
+      font-size: 2.25rem;
+      margin-bottom: 3rem;
+      color: #6366f1; /* indigo-400 */
+      user-select: none;
+      text-align: center;
+    }
 
-  .meter-circle {
-    width: 320px;
-    height: 320px;
-    border-radius: 50%;
-    background: radial-gradient(circle at center, #3b82f6 45%, #2563eb 90%);
-    box-shadow:
-      inset 0 0 30px #60a5fa,
-      0 0 60px #2563eb;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    position: relative;
-    user-select: none;
-    margin-bottom: 3rem;
-    transition: background 0.5s ease, box-shadow 0.5s ease;
-  }
-  .meter-circle.flowing {
-    background: radial-gradient(circle at center, #22c55e 45%, #16a34a 90%);
-    box-shadow:
-      inset 0 0 30px #4ade80,
-      0 0 60px #16a34a;
-  }
-  .meter-circle .label {
-    position: absolute;
-    top: 30px;
-    font-weight: 600;
-    font-size: 1.1rem;
-    letter-spacing: 3px;
-    color: #bfdbfe; /* indigo-200 */
-    text-transform: uppercase;
-  }
-  .meter-circle .reading {
-    font-size: 4.5rem; /* smaller */
-    font-weight: 700;
-    letter-spacing: 0.25em;
-    text-shadow: 0 0 8px #93c5fd;
-  }
-  .meter-circle .unit {
-    margin-top: 0.5rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #bfdbfe;
-  }
-
-
-  /* Switch container */
-  .switch-container {
-    background: #1e293b;
-    padding: 1.5rem 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 10px 25px rgb(59 130 246 / 0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 320px;
-    gap: 1.5rem;
-    user-select: none;
-  }
-  .switch-container p {
-    font-weight: 600;
-    font-size: 1.15rem;
-    color: #e0e7ff;
-    margin: 0;
-    user-select: none;
-  }
-
-  /* Sliding toggle switch */
-  .toggle-switch {
-    position: relative;
-    width: 60px;
-    height: 34px;
-    display: inline-block;
-  }
-  .toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #4b5563; /* gray-600 */
-    border-radius: 34px;
-    transition: background-color 0.3s ease;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
-  }
-  .slider::before {
-    position: absolute;
-    content: "";
-    height: 26px; width: 26px;
-    left: 4px; bottom: 4px;
-    background-color: #f3f4f6; /* gray-100 */
-    border-radius: 50%;
-    transition: transform 0.3s ease, background-color 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
-  }
-  .toggle-switch input:checked + .slider {
-    background-color: #3b82f6; /* blue-500 */
-  }
-  .toggle-switch input:checked + .slider::before {
-    transform: translateX(26px);
-    background-color: white;
-  }
-
-  /* Alert box */
-  #alertBox {
-    max-width: 320px;
-    background: #b91c1c;
-    color: white;
-    border-radius: 0.6rem;
-    padding: 1rem 1.2rem;
-    font-weight: 600;
-    box-shadow: 0 6px 15px rgb(185 28 28 / 0.7);
-    display: none;
-    text-align: center;
-    user-select: none;
-    margin-top: 1rem;
-  }
-
-  /* Responsive */
-  @media (max-width: 400px) {
     .meter-circle {
-      width: 90vw;
-      height: 90vw;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, #3b82f6 45%, #2563eb 90%);
+      box-shadow:
+        inset 0 0 30px #60a5fa,
+        0 0 60px #2563eb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      position: relative;
+      user-select: none;
+      margin-bottom: 3rem;
+      transition: background 0.5s ease, box-shadow 0.5s ease;
+    }
+    .meter-circle.flowing {
+      background: radial-gradient(circle at center, #22c55e 45%, #16a34a 90%);
+      box-shadow:
+        inset 0 0 30px #4ade80,
+        0 0 60px #16a34a;
+    }
+    .meter-circle .label {
+      position: absolute;
+      top: 30px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: 3px;
+      color: #bfdbfe; /* indigo-200 */
+      text-transform: uppercase;
     }
     .meter-circle .reading {
-      font-size: 12vw;
+      font-size: 4.5rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-shadow: 0 0 8px #93c5fd;
     }
-    .switch-container, .top-bar {
-      width: 90vw;
+    .meter-circle .unit {
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #bfdbfe;
+    }
+
+    /* Switch container */
+    .switch-container {
+      background: #1e293b;
+      padding: 1.5rem 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgb(59 130 246 / 0.4);
+      display: flex;
       justify-content: center;
-      flex-wrap: wrap;
+      align-items: center;
+      width: 320px;
+      gap: 1.5rem;
+      user-select: none;
     }
-    .logout-button {
-      margin-left: 0;
-      width: 100%;
+    .switch-container p {
+      font-weight: 600;
+      font-size: 1.15rem;
+      color: #e0e7ff;
+      margin: 0;
+      user-select: none;
     }
-  }
-</style>
+
+    /* Sliding toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 34px;
+      display: inline-block;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #4b5563; /* gray-600 */
+      border-radius: 34px;
+      transition: background-color 0.3s ease;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+    }
+    .slider::before {
+      position: absolute;
+      content: "";
+      height: 26px; width: 26px;
+      left: 4px; bottom: 4px;
+      background-color: #f3f4f6; /* gray-100 */
+      border-radius: 50%;
+      transition: transform 0.3s ease, background-color 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    }
+    .toggle-switch input:checked + .slider {
+      background-color: #3b82f6; /* blue-500 */
+    }
+    .toggle-switch input:checked + .slider::before {
+      transform: translateX(26px);
+      background-color: white;
+    }
+
+    /* Alert box */
+    #alertBox {
+      max-width: 320px;
+      background: #b91c1c;
+      color: white;
+      border-radius: 0.6rem;
+      padding: 1rem 1.2rem;
+      font-weight: 600;
+      box-shadow: 0 6px 15px rgb(185 28 28 / 0.7);
+      display: none;
+      text-align: center;
+      user-select: none;
+      margin-top: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 400px) {
+      .meter-circle {
+        width: 90vw;
+        height: 90vw;
+      }
+      .meter-circle .reading {
+        font-size: 12vw;
+      }
+      .switch-container, .top-bar {
+        width: 90vw;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .logout-button {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -419,113 +413,127 @@
       const val = Number(snap.val()) || 0;
       document.getElementById("counterDisplay").innerText = String(val).padStart(5, "0");
 
-      if (lastValue === null) {
-        lastValue = val;
-        return;
-      }
-
-      if (val > lastValue) {
-        meterCircle.classList.add('flowing');
+      // Flow indicator
+      if (val !== lastValue) {
+        meterCircle.classList.add("flowing");
         clearTimeout(flowTimeout);
         flowTimeout = setTimeout(() => {
-          meterCircle.classList.remove('flowing');
-        }, 2000);
-
-        const lastAlerted = Number(localStorage.getItem("lastAlertedPulses")) || 0;
-
-        switchRef.get().then(snapSwitch => {
-          const switchVal = snapSwitch.val();
-          if ((!switchVal || switchVal === "false" || switchVal === 0) && val !== lastAlerted) {
-            alertsRef.push({
-              message: "Water leak detected",
-              pulses: val,
-              timestamp: Date.now(),
-            });
-            localStorage.setItem("lastAlertedPulses", val);
-          }
-        });
+          meterCircle.classList.remove("flowing");
+        }, 6000);
       }
-
       lastValue = val;
     });
 
-    // Notifications UI
+    // Notifications state
+    let notificationMap = new Map(); // key: alert id, value: alert data + notified boolean
+
+    // Ask for notification permission once on load
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+
+    // Listen to alerts
     alertsRef.on("value", snap => {
       const alerts = snap.val() || {};
-      const alertEntries = Object.entries(alerts);
-      alertEntries.sort((a, b) => b[1].timestamp - a[1].timestamp);
-      notifList.innerHTML = "";
-      const lastSeen = Number(localStorage.getItem(lastSeenTimestampKey)) || 0;
-      let newUnseenCount = 0;
+      const currentTime = Date.now();
+      const lastSeenTimestamp = Number(localStorage.getItem(lastSeenTimestampKey)) || 0;
 
-      alertEntries.forEach(([key, alert]) => {
-        const dateStr = new Date(alert.timestamp).toLocaleString();
-        const li = document.createElement("li");
-        li.textContent = `${alert.message} at ${dateStr}`;
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "×";
-        delBtn.setAttribute("aria-label", "Delete alert");
-        delBtn.addEventListener("click", () => {
-          alertsRef.child(key).remove();
-        });
-        li.appendChild(delBtn);
-        notifList.appendChild(li);
-        if (alert.timestamp > lastSeen) newUnseenCount++;
-      });
-
-      if (!notifPopupOpen) {
-        unseenCount = newUnseenCount;
-        notifCount.innerText = unseenCount;
-        localStorage.setItem("unseenCount", unseenCount);
-      }
-    });
-
-    alertsRef.limitToLast(1).on("child_added", snap => {
-      const alert = snap.val();
-      if (!alert) return;
-
-      alertBox.textContent = alert.message;
-      alertBox.style.display = "block";
-      setTimeout(() => {
-        alertBox.style.display = "none";
-      }, 4000);
-
-      // Browser Notification
-      async function fireSystemNotification(title, message) {
-        if (!("Notification" in window)) return;
-        if (Notification.permission === "granted") {
-          const reg = await navigator.serviceWorker.getRegistration();
-          if (reg) {
-            reg.showNotification(title, {
-              body: message,
-              icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
-              vibrate: [100, 50, 100],
-              tag: "water-alert",
-              renotify: true,
-            });
-          }
+      // Remove alerts that no longer exist
+      for (const key of notificationMap.keys()) {
+        if (!(key in alerts)) {
+          notificationMap.delete(key);
         }
       }
 
-      // Call the notification
-      fireSystemNotification("Water Leak Detected", alert.message);
+      // Clear current list UI
+      notifList.innerHTML = "";
+
+      // Rebuild notification list
+      for (const [key, alert] of Object.entries(alerts)) {
+        // Ensure alert has a timestamp or fallback
+        alert.timestamp = alert.timestamp || currentTime;
+
+        // Add or update in map
+        if (!notificationMap.has(key)) {
+          notificationMap.set(key, { ...alert, notified: false });
+        } else {
+          let existing = notificationMap.get(key);
+          notificationMap.set(key, { ...alert, notified: existing.notified });
+        }
+      }
+
+      // Build list & count unseen alerts
+      let newUnseenCount = 0;
+
+      for (const [key, alert] of notificationMap.entries()) {
+        // Add list item
+        const li = document.createElement("li");
+        li.textContent = alert.message || "Unknown alert";
+
+        // Timestamp formatted
+        const timeStr = new Date(alert.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const timeSpan = document.createElement("span");
+        timeSpan.textContent = timeStr;
+        timeSpan.style.opacity = "0.6";
+        li.appendChild(timeSpan);
+
+        // Delete button
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Delete";
+        delBtn.setAttribute("aria-label", `Delete notification: ${alert.message || "Unknown alert"}`);
+        delBtn.addEventListener("click", () => {
+          alertsRef.child(key).remove();
+          notificationMap.delete(key);
+          updateNotificationCount();
+        });
+        li.appendChild(delBtn);
+
+        notifList.appendChild(li);
+
+        // Count unseen
+        if (alert.timestamp > lastSeenTimestamp) {
+          newUnseenCount++;
+        }
+
+        // Fire notification once per new alert
+        if (!alert.notified && Notification.permission === "granted" && alert.timestamp > lastSeenTimestamp) {
+          new Notification("Water Alert", {
+            body: alert.message || "Alert detected",
+            icon: "https://img.icons8.com/ios-filled/50/ffffff/water.png"
+          });
+          alert.notified = true;
+          notificationMap.set(key, alert);
+        }
+      }
+
+      // Update unseen count and localStorage if changed
+      if (newUnseenCount !== unseenCount) {
+        unseenCount = newUnseenCount;
+        notifCount.textContent = unseenCount;
+        localStorage.setItem("unseenCount", unseenCount);
+      }
+
+      // If popup is open, mark all as seen
+      if (notifPopupOpen) {
+        unseenCount = 0;
+        notifCount.innerText = unseenCount;
+        localStorage.setItem("unseenCount", unseenCount);
+        localStorage.setItem(lastSeenTimestampKey, Date.now());
+      }
     });
 
-    // Request notification permission
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
-
-    // Register Service Worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("sw.js")
-        .then(reg => {
-          console.log("Service Worker registered", reg.scope);
-        })
-        .catch(err => {
-          console.error("Service Worker registration failed", err);
-        });
+    // Helper function to update count when an alert is deleted
+    function updateNotificationCount() {
+      const lastSeenTimestamp = Number(localStorage.getItem(lastSeenTimestampKey)) || 0;
+      let count = 0;
+      for (const alert of notificationMap.values()) {
+        if (alert.timestamp > lastSeenTimestamp) count++;
+      }
+      unseenCount = count;
+      notifCount.textContent = unseenCount;
+      localStorage.setItem("unseenCount", unseenCount);
     }
   </script>
 </body>
