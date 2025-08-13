@@ -14,7 +14,6 @@
       font-family: 'Segoe UI', sans-serif;
     }
 
-    /* Background video styling */
     #bg-video {
       position: fixed;
       top: 0;
@@ -98,8 +97,8 @@
   <div class="login-box">
     <h2>Login</h2>
     <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required/>
-      <input type="password" id="password" placeholder="Password" required/>
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
       <button type="submit">Log In</button>
     </form>
     <div class="error" id="errorMsg"></div>
@@ -111,34 +110,45 @@
 
     document.getElementById("loginForm").addEventListener("submit", e => {
       e.preventDefault();
+
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
       const errorMsg = document.getElementById("errorMsg");
       errorMsg.innerText = "";
 
       fetch(firebaseURL)
-        .then(res => res.json())
+        .then(response => response.json())
         .then(users => {
-          let found = false;
+          let matchedUser = null;
+
           for (const id in users) {
             const user = users[id];
             if (user.username === username && user.password === password) {
-              found = true;
-              localStorage.setItem("userId", id);
-              localStorage.setItem("username", user.username);
-              localStorage.setItem("role", user.role);
-              if (user.role === "residence") {
-                localStorage.setItem("sensorPath", user.sensorPath || "");
-                localStorage.setItem("logPath", user.logPath || "");
-              }
-              window.location.href = `${user.role}_dashboard.html`;
+              matchedUser = { id, ...user };
               break;
             }
           }
-          if (!found) errorMsg.innerText = "Invalid username or password.";
+
+          if (matchedUser) {
+            localStorage.setItem("userId", matchedUser.id);
+            localStorage.setItem("username", matchedUser.username);
+            localStorage.setItem("role", matchedUser.role);
+
+            if (matchedUser.role === "residence") {
+              localStorage.setItem("sensorPath", matchedUser.sensorPath || "");
+              localStorage.setItem("logPath", matchedUser.logPath || "");
+              localStorage.setItem("switchPath", matchedUser.switchPath || "");
+              localStorage.setItem("alertPath", matchedUser.alertPath || "");
+            }
+
+            window.location.href = `${matchedUser.role}_dashboard.html`;
+          } else {
+            errorMsg.innerText = "❌ Invalid username or password.";
+          }
         })
         .catch(err => {
-          errorMsg.innerText = "Connection error.";
+          console.error(err);
+          errorMsg.innerText = "⚠️ Failed to connect to server.";
         });
     });
   </script>
