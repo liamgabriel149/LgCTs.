@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard</title>
   <style>
     * { box-sizing: border-box; }
@@ -130,10 +130,7 @@
       </select>
 
       <div id="residencePaths" style="display: none;">
-        <input type="text" id="sensorPath" placeholder="Sensor Path (e.g., /sensors2/water_timer_counter/value)" />
-        <input type="text" id="logPath" placeholder="Log Path (e.g., /sensors2/water_timer_counter/logs)" />
-        <input type="text" id="switchPath" placeholder="Switch Path (e.g., /sensors2/control_switch/value)" />
-        <input type="text" id="alertPath" placeholder="Alert Path (e.g., /sensors2/water_alerts)" />
+        <input type="text" id="sensorRoot" placeholder="Sensor Root (e.g., sensors2)" />
       </div>
 
       <button type="submit">Save Account</button>
@@ -152,7 +149,6 @@
   </div>
 
   <script>
-    // Initialize Firebase (one app only)
     const firebaseConfig = {
       databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
@@ -161,6 +157,7 @@
 
     let editUserId = null, usersData = {};
 
+    // Show/hide sensor root input for residence role
     document.getElementById("role").addEventListener("change", e => {
       document.getElementById("residencePaths").style.display = e.target.value === "residence" ? "block" : "none";
     });
@@ -171,45 +168,56 @@
       const p = document.getElementById("password").value.trim();
       const r = document.getElementById("role").value;
 
-      const sp = document.getElementById("sensorPath").value.trim();
-      const lp = document.getElementById("logPath").value.trim();
-      const sw = document.getElementById("switchPath").value.trim();
-      const ap = document.getElementById("alertPath").value.trim();
+      const root = document.getElementById("sensorRoot").value.trim();
 
       if (!u || !p || !r) return showMsg("❌ All fields are required");
 
-      const userData = { username: u, password: p, role: r };
-      if (r === "residence") {
-        if (!sp || !lp || !sw || !ap) return showMsg("❌ All residence paths are required");
-        Object.assign(userData, { sensorPath: sp, logPath: lp, switchPath: sw, alertPath: ap });
+      // Reference for new or existing user
+      let userRef;
+      if(editUserId) {
+        userRef = db.ref("users/" + editUserId);
+      } else {
+        userRef = db.ref("users").push();
+        editUserId = userRef.key;
       }
 
-      const ref = editUserId ? db.ref("users/" + editUserId) : db.ref("users").push();
-      ref.set(userData).then(() => {
-        if (r === "residence") {
-          const sensorRoot = sp.split("/")[1]; // sensors2
-          if (sensorRoot) {
-            const sensorData = {
-              water_timer_counter: {
-                value: 0,
-                logs: {
-                  exampleLog1: { timestamp: Date.now(), pulses: 5 },
-                  exampleLog2: { timestamp: Date.now() + 10000, pulses: 8 }
-                }
-              },
-              control_switch: { value: true },
-              water_alerts: {
-                "-Nl123abc": {
-                  message: "Water leak detected",
-                  pulses: 14,
-                  timestamp: Date.now()
-                }
-              }
-            };
-            db.ref(sensorRoot).set(sensorData);
-          }
-        }
+      const userData = { username: u, password: p, role: r };
 
+      if (r === "residence") {
+        if (!root) return showMsg("❌ Sensor root is required");
+
+        // Build unique paths using user ID
+        const sensorPath = `${root}/${editUserId}/water_timer_counter/value`;
+        const logPath = `${root}/${editUserId}/water_timer_counter/logs`;
+        const switchPath = `${root}/${editUserId}/control_switch/value`;
+        const alertPath = `${root}/${editUserId}/water_alerts`;
+
+        Object.assign(userData, { sensorPath, logPath, switchPath, alertPath });
+
+        // Add default sensor data only if creating a new user (not editing)
+        if(!editUserId || !usersData[editUserId]) {
+          const sensorData = {
+            water_timer_counter: {
+              value: 0,
+              logs: {
+                exampleLog1: { timestamp: Date.now(), pulses: 5 },
+                exampleLog2: { timestamp: Date.now() + 10000, pulses: 8 }
+              }
+            },
+            control_switch: { value: true },
+            water_alerts: {
+              [`alert_${Date.now()}`]: {
+                message: "Water leak detected",
+                pulses: 14,
+                timestamp: Date.now()
+              }
+            }
+          };
+          db.ref(`${root}/${editUserId}`).set(sensorData);
+        }
+      }
+
+      userRef.set(userData).then(() => {
         showMsg("✅ Account and sensor data saved");
         document.getElementById("userForm").reset();
         editUserId = null;
@@ -219,7 +227,9 @@
     });
 
     function showMsg(msg) {
-      document.getElementById("messageBox").innerText = msg;
+      const box = document.getElementById("messageBox");
+      box.innerText = msg;
+      setTimeout(() => { box.innerText = ""; }, 3000);
     }
 
     function loadUsers() {
@@ -263,13 +273,19 @@
 
     function editUser(id) {
       const u = usersData[id];
+      if (!u) return showMsg("❌ User not found");
+
       document.getElementById("username").value = u.username;
       document.getElementById("password").value = u.password;
       document.getElementById("role").value = u.role;
-      document.getElementById("sensorPath").value = u.sensorPath || "";
-      document.getElementById("logPath").value = u.logPath || "";
-      document.getElementById("switchPath").value = u.switchPath || "";
-      document.getElementById("alertPath").value = u.alertPath || "";
+
+      // Extract sensor root for editing
+      let root = "";
+      if (u.sensorPath) {
+        root = u.sensorPath.split("/")[0];
+      }
+      document.getElementById("sensorRoot").value = root;
+
       editUserId = id;
       showMsg("✏️ Editing user...");
       document.getElementById("residencePaths").style.display = u.role === "residence" ? "block" : "none";
