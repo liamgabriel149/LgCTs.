@@ -10,101 +10,239 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      overflow: hidden;
       font-family: 'Segoe UI', sans-serif;
+      background: url("background.jpg") no-repeat center center/cover;
+      color: #fff;
     }
 
-    #bg-video {
+    /* Navbar */
+    .navbar {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      z-index: -1;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      background: rgba(20, 20, 20, 0.6);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      z-index: 10;
+    }
+    .navbar .logo {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .navbar ul {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+      margin: 0;
+      padding: 0;
+    }
+    .navbar ul li {
+      display: inline;
+    }
+    .navbar ul li a {
+      text-decoration: none;
+      color: #fff;
+      font-size: 0.95rem;
+      transition: 0.3s;
+    }
+    .navbar ul li a:hover {
+      color: #00c3ff;
+    }
+    .navbar .login-btn {
+      padding: 6px 16px;
+      border: 1px solid #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #fff;
+      transition: 0.3s;
+    }
+    .navbar .login-btn:hover {
+      background: #00c3ff;
+      border-color: #00c3ff;
+      color: #fff;
     }
 
+    /* Login Box */
     .login-box {
-      position: relative;
-      background-color: rgba(30, 30, 30, 0.85);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(20, 20, 20, 0.6);
+      backdrop-filter: blur(15px);
       padding: 2rem;
-      border-radius: 16px;
+      border-radius: 12px;
       width: 90%;
       max-width: 350px;
-      margin: auto;
-      top: 50%;
-      transform: translateY(-50%);
-      text-align: center;
       color: #fff;
-      box-shadow: 0 0 15px rgba(255,255,255,0.05);
+      box-shadow: 0 0 25px rgba(0,0,0,0.6);
     }
-
     .login-box h2 {
+      text-align: center;
       margin-bottom: 1.5rem;
       font-size: 1.5rem;
     }
-
-    input[type="text"], input[type="password"], button {
+    .login-box .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 18px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+    }
+    .login-box label {
+      font-size: 0.9rem;
+      display: block;
+      margin: 0.5rem 0 0.3rem;
+    }
+    .login-box input[type="text"],
+    .login-box input[type="password"] {
       width: 100%;
       padding: 0.7rem;
-      margin: 0.5rem 0;
-      border-radius: 8px;
-      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
     }
-
-    input[type="text"], input[type="password"] {
-      background-color: #2b2b2b;
-      border: none;
-      color: white;
+    .login-box input::placeholder {
+      color: #bbb;
     }
-
-    button {
-      background-color: #0095f6;
-      color: white;
+    .login-box .options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .login-box .options label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+    .login-box .options a {
+      color: #00c3ff;
+      text-decoration: none;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 0.8rem;
       border: none;
+      border-radius: 6px;
+      background: #00c3ff;
+      color: #fff;
+      font-size: 1rem;
       cursor: pointer;
       transition: 0.3s;
     }
-
-    button:hover {
-      background-color: #007dd1;
+    .login-box button:hover {
+      background: #009ed1;
     }
-
-    .error {
-      color: #ff5c5c;
-      font-size: 0.9rem;
+    .login-box .bottom-text {
+      text-align: center;
+      font-size: 0.85rem;
       margin-top: 1rem;
     }
+    .login-box .bottom-text a {
+      color: #00c3ff;
+      text-decoration: none;
+    }
+    .error {
+      color: #ff5c5c;
+      font-size: 0.85rem;
+      margin-top: 0.8rem;
+      text-align: center;
+    }
 
-    @media (max-height: 500px) {
+    /* 📱 Responsive Phone Mode */
+    @media (max-width: 600px) {
+      .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 20px;
+      }
+      .navbar ul {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        margin-top: 10px;
+      }
+      .navbar ul li {
+        width: 100%;
+      }
+      .navbar ul li a {
+        display: block;
+        padding: 8px;
+        width: 100%;
+      }
+      .navbar .login-btn {
+        margin-top: 10px;
+        align-self: flex-end;
+      }
       .login-box {
-        top: auto;
-        transform: none;
-        margin-top: 2rem;
+        width: 95%;
+        padding: 1.5rem;
+      }
+      .login-box h2 {
+        font-size: 1.3rem;
+      }
+      .login-box input[type="text"],
+      .login-box input[type="password"] {
+        font-size: 1rem;
+        padding: 0.9rem;
+      }
+      .login-box button {
+        padding: 1rem;
+        font-size: 1.05rem;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Background Video -->
-  <video autoplay muted loop id="bg-video">
-    <source src="water.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">Logo</div>
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#">About</a></li>
+      <li><a href="#">Services</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+    <a href="#" class="login-btn">Login</a>
+  </nav>
 
-  <!-- Login Form -->
+  <!-- Login Box -->
   <div class="login-box">
     <h2>Login</h2>
     <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit">Log In</button>
+      <label for="username">Email</label>
+      <input type="text" id="username" placeholder="Enter email" required>
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter password" required>
+      <div class="options">
+        <label><input type="checkbox" id="remember"> Remember me</label>
+        <a href="#">Forgot Password?</a>
+      </div>
+      <button type="submit">Login</button>
     </form>
+    <div class="bottom-text">
+      Don’t have an account? <a href="#">Register</a>
+    </div>
     <div class="error" id="errorMsg"></div>
   </div>
 
-  <!-- JavaScript -->
+  <!-- Firebase Login Script -->
   <script>
     const firebaseURL = "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/users.json";
 
