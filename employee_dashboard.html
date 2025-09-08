@@ -17,34 +17,107 @@
 
     h1 {
       text-align: center;
-      margin-bottom: 30px;
+      margin: 80px 0 30px;
       color: #00eaff;
       font-size: 28px;
       text-shadow: 0 0 12px rgba(0, 234, 255, 0.8);
     }
 
-    /* Glassy container */
-    .form-container {
+    /* Navbar */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+      z-index: 100;
+    }
+    .navbar button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .add-btn {
+      background: linear-gradient(135deg, #00eaff, #0095f6);
+      color: white;
+      box-shadow: 0 0 10px rgba(0, 234, 255, 0.6);
+    }
+    .add-btn:hover {
+      background: linear-gradient(135deg, #0095f6, #007dd1);
+      transform: scale(1.05);
+    }
+    .logout-btn {
+      background: rgba(255, 77, 77, 0.85);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 77, 77, 0.6);
+    }
+    .logout-btn:hover {
+      background: rgba(229, 57, 53, 0.95);
+      transform: scale(1.05);
+    }
+
+    /* Notification Banner */
+    .top-notif {
+      display: none;
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #00eaff;
+      color: black;
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      z-index: 2000;
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -20px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* Modal Popup */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+    }
+    .modal-content {
       background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
       padding: 20px;
       border-radius: 16px;
-      max-width: 420px;
-      margin: 0 auto 30px;
+      max-width: 400px;
+      width: 90%;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+      animation: slideDown 0.3s ease;
     }
-
-    h3 {
+    @keyframes slideDown {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal h3 {
       margin-bottom: 15px;
       color: #00eaff;
-      text-align: center;
       text-shadow: 0 0 8px rgba(0, 234, 255, 0.6);
     }
-
-    input[type="text"],
-    input[type="password"],
-    select {
+    .modal input {
       width: 100%;
       padding: 12px;
       margin: 10px 0;
@@ -55,52 +128,26 @@
       font-size: 14px;
       outline: none;
     }
-
-    select option {
-      color: black;
-      background: #f9f9f9;
-    }
-
-    button {
+    .modal button {
+      width: 100%;
       padding: 12px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
       background: linear-gradient(135deg, #00eaff, #0095f6);
       color: #fff;
-      border: none;
-      border-radius: 8px;
       cursor: pointer;
-      font-size: 15px;
-      margin-top: 10px;
-      width: 100%;
-      box-shadow: 0 4px 12px rgba(0, 234, 255, 0.4);
       transition: all 0.3s ease;
     }
-
-    button:hover {
+    .modal button:hover {
       background: linear-gradient(135deg, #0095f6, #007dd1);
-      transform: translateY(-2px);
     }
-
-    /* Logout button */
-    .logout-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
+    .close-btn {
+      margin-top: 8px;
       background: rgba(255, 77, 77, 0.85);
-      border: none;
-      padding: 10px 20px;
-      border-radius: 10px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 0 12px rgba(255, 77, 77, 0.6);
-      backdrop-filter: blur(10px);
-      z-index: 10;
-      transition: 0.3s;
     }
-
-    .logout-btn:hover {
+    .close-btn:hover {
       background: rgba(229, 57, 53, 0.95);
-      transform: scale(1.05);
     }
 
     /* Account list */
@@ -110,8 +157,6 @@
       gap: 20px;
       padding: 0 10px;
     }
-
-    /* Glassy card for meters */
     .meter-card {
       background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(10px);
@@ -119,31 +164,15 @@
       padding: 20px;
       box-shadow: 0 8px 24px rgba(0, 234, 255, 0.2);
       text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      transition: 0.3s;
       border: 1px solid rgba(255, 255, 255, 0.15);
+      position: relative;
     }
-
     .meter-card:hover {
       transform: translateY(-6px);
       box-shadow: 0 12px 30px rgba(0, 234, 255, 0.35);
     }
 
-    .username {
-      font-weight: bold;
-      margin-top: 15px;
-      font-size: 18px;
-      color: #00eaff;
-      text-shadow: 0 0 6px rgba(0, 234, 255, 0.6);
-      word-break: break-word;
-    }
-
-    .role {
-      font-size: 13px;
-      color: #b0e0e6;
-      margin-top: 2px;
-    }
-
-    /* Glowing circle meter */
     .circle-meter {
       width: 160px;
       height: 160px;
@@ -157,147 +186,423 @@
       align-items: center;
       box-shadow: 0 0 20px rgba(0, 234, 255, 0.6);
     }
-
     .circle-meter .value {
       font-size: 30px;
       font-weight: bold;
       color: #ffffff;
-      letter-spacing: 2px;
       text-shadow: 0 0 8px #00eaff;
     }
-
     .circle-meter .unit {
       font-size: 13px;
       color: #b0e0e6;
     }
 
-    /* Responsive tweaks */
-    @media (min-width: 768px) {
-      body { padding: 40px; }
-      h1 { font-size: 32px; }
-      button { width: auto; }
+    /* Notification button */
+    .notif-btn {
+      margin-top: 10px;
+      padding: 6px 12px;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      background: #00eaff;
+      color: black;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .notif-btn:hover {
+      background: #0095f6;
+      color: white;
     }
 
+    /* Popup box */
+    .notif-popup {
+      display: none;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 220px;
+      background: rgba(0,0,0,0.85);
+      border-radius: 12px;
+      padding: 10px;
+      color: white;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+    .notif-popup textarea {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      resize: none;
+      outline: none;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .notif-popup button {
+      margin: 3px;
+      padding: 6px 10px;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .notif-popup .closeN {
+      background: #ff4d4d;
+      color: white;
+      float: right;
+    }
+    .notif-popup .closeN:hover {
+      background: #d32f2f;
+    }
+    .notif-popup button:not(.closeN) {
+      background: #00eaff;
+      color: black;
+    }
+    .notif-popup button:not(.closeN):hover {
+      background: #0095f6;
+      color: white;
+    }
+
+    /* Chat popup */
+    .chat-popup {
+      display: none;
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 320px;
+      background: rgba(0,0,0,0.9);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    .chat-header {
+      background: #00eaff;
+      color: black;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      max-height: 250px;
+    }
+    .chat-messages div {
+      margin-bottom: 8px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      max-width: 75%;
+      word-wrap: break-word;
+    }
+    .sent { background:#0095f6; color:white; margin-left:auto; }
+    .received { background:#374151; color:#e5e7eb; margin-right:auto; }
+    .chat-form { display:flex; border-top:1px solid #374151; }
+    .chat-form input { flex:1; padding:10px; border:none; background:#111827; color:white; }
+    .chat-form button { background:#0095f6; border:none; color:white; padding:10px 15px; }
+
+    /* Notification Popup */
+    #notifWrapper {
+      position: relative;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    #notifCount {
+      background: red;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      vertical-align: top;
+      margin-left: 4px;
+      display: none;
+    }
+
+    #notifPopup {
+      display: none;
+      position: absolute;
+      top: 40px;
+      right: 0;
+      width: 300px;
+      max-height: 400px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.9);
+      color: white;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+
+    #notifList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #notifList li {
+      padding: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+
+    /* Responsive */
     @media (max-width: 480px) {
-      .logout-btn {
-        font-size: 12px;
-        padding: 8px 12px;
-        top: 10px;
-        left: 10px;
-      }
+      h1 { font-size: 22px; }
       .circle-meter { width: 120px; height: 120px; }
-      .circle-meter .value { font-size: 24px; }
-      .circle-meter .unit { font-size: 12px; }
-      .username { font-size: 16px; }
+      .circle-meter .value { font-size: 22px; }
     }
   </style>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
+  <!-- Navbar -->
+  <div class="navbar">
+    <button class="add-btn" onclick="openModal()">+ Add Residence</button>
+    <div id="notifWrapper">
+      🔔 <span id="notifCount">0</span>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+
+    <!-- Notification Popup -->
+    <div id="notifPopup">
+      <ul id="notifList"></ul>
+    </div>
+  </div>
+
+  <!-- Notification Banner -->
+  <div class="top-notif" id="topNotif"></div>
+
   <h1>Welcome, Employee</h1>
 
-  <div class="form-container">
-    <h3>Add Residence Account</h3>
-    <form id="residenceForm">
-      <input type="text" id="resUsername" placeholder="Username" required /><br />
-      <input type="password" id="resPassword" placeholder="Password" required /><br />
-      <input type="text" id="sensorRoot" placeholder="Sensor Root (e.g., sensorsX)" required /><br />
-      <button type="submit">Add Residence</button>
-    </form>
+  <!-- Modal -->
+  <div class="modal" id="addModal">
+    <div class="modal-content">
+      <h3>Add Residence Account</h3>
+      <form id="residenceForm">
+        <input type="text" id="resUsername" placeholder="Username" required />
+        <input type="password" id="resPassword" placeholder="Password" required />
+        <input type="text" id="sensorRoot" placeholder="Sensor Root (e.g., sensorsX)" required />
+        <button type="submit">Add Residence</button>
+        <button type="button" class="close-btn" onclick="closeModal()">Cancel</button>
+      </form>
+    </div>
   </div>
 
   <div class="account-list" id="residenceList"></div>
 
-  <button class="logout-btn" onclick="logout()">Logout</button>
+  <!-- Chat Popup -->
+  <div id="chatPopup" class="chat-popup">
+    <div class="chat-header">
+      <span id="chatWith">Chat</span>
+      <button id="closeChat">×</button>
+    </div>
+    <div id="chatMessages" class="chat-messages"></div>
+    <form id="chatForm" class="chat-form">
+      <input type="text" id="chatInput" placeholder="Type..." required />
+      <button type="submit">Send</button>
+    </form>
+  </div>
 
-  <script>
-    const app = firebase.initializeApp({
-      databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    });
-    const db = firebase.database(app);
+<script>
+  const app = firebase.initializeApp({
+    databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  });
+  const db = firebase.database(app);
 
-    // Add new residence account
-    document.getElementById("residenceForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const username = document.getElementById("resUsername").value.trim();
-      const password = document.getElementById("resPassword").value.trim();
-      const root = document.getElementById("sensorRoot").value.trim();
-      if (!username || !password || !root) return alert("All fields are required");
+  // Modal
+  function openModal() { document.getElementById("addModal").style.display = "flex"; }
+  function closeModal() { document.getElementById("addModal").style.display = "none"; }
 
-      const newUser = { username, password, role: "residence", sensorRoot: root };
-      try {
-        await db.ref("users").push(newUser);
-        alert("Residence account added!");
-        this.reset();
-        loadAllUserMeters();
-      } catch (err) {
-        alert("Error: " + err.message);
+  // Add Residence
+  document.getElementById("residenceForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const username = document.getElementById("resUsername").value.trim();
+    const password = document.getElementById("resPassword").value.trim();
+    const root = document.getElementById("sensorRoot").value.trim();
+    if (!username || !password || !root) return alert("All fields are required");
+
+    const newUser = { username, password, role: "residence", sensorRoot: root };
+    try {
+      await db.ref("users").push(newUser);
+      alert("Residence account added!");
+      this.reset();
+      closeModal();
+      loadAllUserMeters();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  });
+
+  // Chat state
+  const username = "Employee";
+  let activeChatId = null;
+  let chatRef = null;
+
+  const chatPopup = document.getElementById("chatPopup");
+  const closeChat = document.getElementById("closeChat");
+  const chatMessages = document.getElementById("chatMessages");
+  const chatWith = document.getElementById("chatWith");
+  const chatForm = document.getElementById("chatForm");
+  const chatInput = document.getElementById("chatInput");
+  const topNotif = document.getElementById("topNotif");
+
+  closeChat.onclick = () => { chatPopup.style.display = "none"; if(chatRef) chatRef.off(); };
+
+  chatForm.addEventListener("submit", e => {
+    e.preventDefault();
+    if (!activeChatId) return;
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    chatRef.push({ sender: username, text: msg, timestamp: Date.now() });
+    chatInput.value = "";
+  });
+
+  async function loadAllUserMeters() {
+    const list = document.getElementById("residenceList");
+    list.innerHTML = "";
+    const snapshot = await db.ref("users").once("value");
+    const users = snapshot.val() || {};
+
+    for (const uid in users) {
+      const user = users[uid];
+      let sensorPath = null;
+
+      if (user.role === "residence" && user.sensorRoot) {
+        sensorPath = `${user.sensorRoot}/${uid}/water_timer_counter/value`;
+      } else if (user.sensorPath) {
+        sensorPath = user.sensorPath;
       }
-    });
 
-    async function loadAllUserMeters() {
-      const list = document.getElementById("residenceList");
-      list.innerHTML = "";
-      const snapshot = await db.ref("users").once("value");
-      const users = snapshot.val() || {};
+      if (!sensorPath) continue;
 
-      for (const uid in users) {
-        const user = users[uid];
-        let sensorPath = null;
+      const card = document.createElement("div");
+      card.className = "meter-card";
+      card.innerHTML = `
+        <div class="circle-meter">
+          <div class="value">...</div>
+          <div class="unit">Liters</div>
+        </div>
+        <div class="username">${user.username}</div>
+        <div class="role">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</div>
+        <button class="notif-btn" onclick="toggleNotif('${uid}')">🔔 Notify</button>
+        <button class="notif-btn" onclick="openChat('${user.username}')">💬 Chat</button>
+        <div class="notif-popup" id="notif-${uid}">
+          <textarea placeholder="Enter message..."></textarea>
+          <button onclick="sendNotif('${uid}')">Send</button>
+          <button class="closeN" onclick="toggleNotif('${uid}')">×</button>
+        </div>
+      `;
 
-        if (user.role === "residence" && user.sensorRoot) {
-          sensorPath = `${user.sensorRoot}/${uid}/water_timer_counter/value`;
-        } else if (user.sensorPath) {
-          sensorPath = user.sensorPath;
-        } else if (user.role === "employee" && user.sensorRoot) {
-          sensorPath = `${user.sensorRoot}/${uid}/water_timer_counter/value`;
-        }
+      list.appendChild(card);
 
-        if (!sensorPath) continue;
-
-        const card = document.createElement("div");
-        card.className = "meter-card";
-        card.innerHTML = `
-          <div class="circle-meter">
-            <div class="value">...</div>
-            <div class="unit">Liters</div>
-          </div>
-          <div class="username">${user.username}</div>
-          <div class="role">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</div>
-        `;
-
-        list.appendChild(card);
-
-        const valueEl = card.querySelector(".value");
-        db.ref(sensorPath).on(
-          "value",
-          (snap) => {
-            const val = snap.val();
-            valueEl.textContent = val !== null ? val : "0";
-          },
-          () => {
-            valueEl.textContent = "N/A";
-          }
-        );
-      }
-
-      if (list.innerHTML === "") {
-        list.innerHTML = "<p>No users with meters found.</p>";
-      }
+      const valueEl = card.querySelector(".value");
+      db.ref(sensorPath).on("value", (snap) => {
+        const val = snap.val();
+        valueEl.textContent = val !== null ? val : "0";
+      }, () => {
+        valueEl.textContent = "N/A";
+      });
     }
 
-    function logout() {
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.replace("index.html");
+    if (list.innerHTML === "") {
+      list.innerHTML = "<p>No users with meters found.</p>";
     }
+  }
 
-    loadAllUserMeters();
-  </script>
+  function toggleNotif(uid) {
+    const popup = document.getElementById(`notif-${uid}`);
+    popup.style.display = popup.style.display === "block" ? "none" : "block";
+  }
+
+  function sendNotif(uid) {
+    const popup = document.getElementById(`notif-${uid}`);
+    const textarea = popup.querySelector("textarea");
+    const message = textarea.value.trim();
+    if (!message) return alert("Message is empty!");
+    alert("Notification sent to " + uid + ": " + message);
+    textarea.value = "";
+    popup.style.display = "none";
+  }
+
+  // Chat
+  window.openChat = (resName) => {
+    activeChatId = `${resName}_${username}`;
+    chatWith.textContent = `Chat with ${resName}`;
+    chatMessages.innerHTML = "";
+    chatPopup.style.display = "flex";
+
+    if(chatRef) chatRef.off();
+    chatRef = db.ref("chats/" + activeChatId);
+    chatRef.on("child_added", snap => {
+      const msg = snap.val();
+      const div = document.createElement("div");
+      div.className = msg.sender === username ? "sent" : "received";
+      div.textContent = msg.text;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      if (msg.sender !== username) showTopNotif(`New message from ${msg.sender}: ${msg.text}`);
+    });
+  };
+
+  function showTopNotif(message) {
+    topNotif.textContent = message;
+    topNotif.style.display = "block";
+    setTimeout(() => { topNotif.style.display = "none"; }, 4000);
+  }
+
+  function logout() {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.replace("index.html");
+  }
+
+  loadAllUserMeters();
+
+  // ===== Notification Popup Code =====
+  const notifWrapper = document.getElementById("notifWrapper");
+  const notifCountEl = document.getElementById("notifCount");
+  const notifPopup = document.getElementById("notifPopup");
+  const notifList = document.getElementById("notifList");
+
+  let notifications = [];
+
+  function addNotification(message) {
+    notifications.unshift(message); // newest first
+    notifCountEl.textContent = notifications.length;
+    notifCountEl.style.display = "inline-block";
+
+    // Update popup list
+    notifList.innerHTML = "";
+    notifications.forEach(msg => {
+      const li = document.createElement("li");
+      li.textContent = msg;
+      notifList.appendChild(li);
+    });
+  }
+
+  notifWrapper.onclick = () => {
+    notifPopup.style.display = notifPopup.style.display === "block" ? "none" : "block";
+    notifCountEl.textContent = "0";
+    notifCountEl.style.display = "none";
+  };
+
+  // Listen for Firebase messages to show in notification popup
+  const chatsRefPopup = firebase.database().ref("chats");
+  chatsRefPopup.on("child_added", snapshot => {
+    const chatId = snapshot.key;
+    const messagesRef = chatsRefPopup.child(chatId);
+
+    messagesRef.on("child_added", msgSnap => {
+      const msg = msgSnap.val();
+      if (msg.sender !== username) addNotification(`New message from ${msg.sender}: ${msg.text}`);
+    });
+  });
+</script>
 </body>
 </html>
-
-
