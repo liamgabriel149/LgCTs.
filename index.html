@@ -11,7 +11,7 @@
       padding: 0;
       height: 100%;
       font-family: 'Segoe UI', sans-serif;
-      background: url("background.jpg") no-repeat center center/cover;
+      background: url("1..jpg") no-repeat center center/cover;
       color: #fff;
     }
 
@@ -66,6 +66,11 @@
       background: #00c3ff;
       border-color: #00c3ff;
       color: #fff;
+    }
+    .hamburger {
+      display: none;
+      font-size: 1.8rem;
+      cursor: pointer;
     }
 
     /* Login Box */
@@ -167,42 +172,35 @@
     /* 📱 Responsive Phone Mode */
     @media (max-width: 600px) {
       .navbar {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 10px 20px;
+        flex-direction: row;
+        align-items: center;
+        padding: 10px 15px;
       }
+      .navbar .hamburger { display: block; }
       .navbar ul {
         flex-direction: column;
         gap: 10px;
         width: 100%;
         margin-top: 10px;
+        display: none;
       }
-      .navbar ul li {
-        width: 100%;
-      }
-      .navbar ul li a {
-        display: block;
-        padding: 8px;
-        width: 100%;
-      }
-      .navbar .login-btn {
-        margin-top: 10px;
-        align-self: flex-end;
-      }
+      .navbar ul.show { display: flex; }
+      .navbar ul li a { display: block; padding: 8px; width: 100%; text-align: center; }
+
       .login-box {
         width: 95%;
-        padding: 1.5rem;
+        padding: 2rem 1.5rem;
       }
       .login-box h2 {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
       }
       .login-box input[type="text"],
       .login-box input[type="password"] {
         font-size: 1rem;
-        padding: 0.9rem;
+        padding: 1rem;
       }
       .login-box button {
-        padding: 1rem;
+        padding: 1.2rem;
         font-size: 1.05rem;
       }
     }
@@ -212,7 +210,8 @@
 
   <!-- Navbar -->
   <nav class="navbar">
-    <div class="logo">Logo</div>
+    <div class="logo">InstaStyle</div>
+    <div class="hamburger" onclick="toggleMenu()">☰</div>
     <ul>
       <li><a href="#">Home</a></li>
       <li><a href="#">About</a></li>
@@ -289,6 +288,11 @@
           errorMsg.innerText = "⚠️ Failed to connect to server.";
         });
     });
+
+    // Toggle mobile navbar
+    function toggleMenu() {
+      document.querySelector('.navbar ul').classList.toggle('show');
+    }
   </script>
 
 </body>
