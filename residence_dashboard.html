@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Residence Water Flow Dashboard</title>
+  <link rel="stylesheet" href="residence.css">
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -355,7 +356,11 @@
         <ul id="notifList"></ul>
       </div>
     </div>
-    <button class="logout-button" id="logoutBtn">Logout</button>
+   <a class="logout-button" href="viewer.html">Bill rates</a>
+<a class="logout-button" id="messagesBtn">Messages</a>
+<button class="logout-button" id="logoutBtn">Logout</button>
+
+
   </div>
 
   <!-- Welcome Message -->
@@ -376,6 +381,21 @@
       <span class="slider"></span>
     </label>
   </div>
+
+  <!-- Bill Summary Card -->
+<div id="billCard" style="
+  max-width: 400px;
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  margin-top: 2rem;
+  color: #e0e7ff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+">
+  <h2 style="margin:0 0 1rem; color:#38bdf8;">Water Bill Summary</h2>
+  <p><strong>Consumption:</strong> <span id="billConsumption">0</span> </p>
+  <p><strong>Total Bill:</strong> <span id="billAmount">0.00</span></p>
+</div>
 
   <!-- Alert Box -->
   <div id="alertBox"></div>
@@ -555,15 +575,18 @@ const closeChat = document.getElementById("closeChat");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
+const messagesBtn = document.getElementById("messagesBtn");
 
 // Match Firebase JSON structure: "Residence_Employee"
 const chatRoom = `${currentUser}_Employee`;
 const chatRef = db.ref(`chats/${chatRoom}`);
 
-// Open chat (double click Notifications button as trigger)
-notifBtn.addEventListener("dblclick", () => {
+// Open chat when Messages button clicked
+messagesBtn.addEventListener("click", () => {
   chatPopup.style.display = "flex";
 });
+
+// Close chat
 closeChat.addEventListener("click", () => {
   chatPopup.style.display = "none";
 });
@@ -586,6 +609,7 @@ chatRef.on("child_added", snap => {
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
+
   // Notifications UI
     alertsRef.on("value", snap => {
       const alerts = snap.val() || {};
@@ -664,6 +688,69 @@ chatRef.on("child_added", snap => {
           console.error("Service Worker registration failed", err);
         });
     }
+    // === Billing System ===
+  let currentRates = null;
+  let currentConsumption = 0;
+
+  // Load rates
+  db.ref("residential_water_rates").on("value", snap => {
+    currentRates = snap.val();
+    updateBill();
+  });
+
+  // Load consumption (already cubic meters)
+  db.ref(sensorPath).on("value", snap => {
+    currentConsumption = Number(snap.val()) || 0;
+    updateBill();
+  });
+
+  function calculateBill(consumption) {
+    if (!currentRates) return 0;
+    let bill = 0;
+
+    if (consumption <= 5) {
+      bill = parseFloat(currentRates.r0_5);
+    } else if (consumption <= 10) {
+      bill = parseFloat(currentRates.r0_5);
+      for (let i = 6; i <= consumption; i++) {
+        bill += parseFloat(currentRates["r" + i]);
+      }
+    } else {
+      bill = parseFloat(currentRates.r0_5);
+      for (let i = 6; i <= 10; i++) {
+        bill += parseFloat(currentRates["r" + i]);
+      }
+      if (consumption > 10) {
+        let extra = Math.min(consumption, 20) - 10;
+        bill += extra * parseFloat(currentRates.r11_20);
+      }
+      if (consumption > 20) {
+        let extra = Math.min(consumption, 30) - 20;
+        bill += extra * parseFloat(currentRates.r21_30);
+      }
+      if (consumption > 30) {
+        let extra = Math.min(consumption, 40) - 30;
+        bill += extra * parseFloat(currentRates.r31_40);
+      }
+      if (consumption > 40) {
+        let extra = Math.min(consumption, 50) - 40;
+        bill += extra * parseFloat(currentRates.r41_50);
+      }
+      if (consumption > 50) {
+        let extra = consumption - 50;
+        bill += extra * parseFloat(currentRates.r51_up);
+      }
+    }
+    return bill;
+  }
+
+  function updateBill() {
+    if (!currentRates) return;
+    const bill = calculateBill(currentConsumption);
+    document.getElementById("billConsumption").textContent = currentConsumption + " m³";
+    document.getElementById("billAmount").textContent = "₱" + bill.toFixed(2);
+  }
+
   </script>
 </body>
 </html>
