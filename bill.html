@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Residential Water Rates</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    /* Body background with glossy Instagram gradient shine */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at top left, #1a1a1a, #0d0d0d);
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    /* Glassy container */
+    .container {
+      max-width: 850px;
+      margin: auto;
+      background: rgba(25, 25, 25, 0.85);
+      padding: 25px;
+      border-radius: 18px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 20px rgba(255,255,255,0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Gradient glossy title */
+    h2 {
+      text-align: center;
+      background: linear-gradient(90deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 25px;
+      text-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    th, td {
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      background: rgba(255,255,255,0.05);
+      color: #f1f1f1;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td {
+      background: rgba(255,255,255,0.02);
+      transition: background 0.3s;
+    }
+    tr:hover td {
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* Inputs glossy effect */
+    input[type="number"] {
+      width: 90px;
+      padding: 8px;
+      text-align: right;
+      border: none;
+      border-radius: 8px;
+      background: rgba(40,40,40,0.9);
+      color: #fff;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(255,255,255,0.05);
+      transition: all 0.2s;
+    }
+    input[type="number"]:focus {
+      outline: none;
+      background: rgba(60,60,60,0.95);
+      box-shadow: 0 0 10px #d62976, 0 0 20px #962fbf;
+    }
+
+    /* Glossy gradient button */
+    button {
+      width: 100%;
+      padding: 15px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+      color: #fff;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6), 0 0 15px rgba(255,255,255,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.8), 0 0 25px #d62976, 0 0 35px #4f5bd5;
+    }
+
+    /* Navigation links */
+    .nav {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .nav a {
+      font-weight: bold;
+      text-decoration: none;
+      background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      transition: opacity 0.3s;
+    }
+    .nav a:hover {
+      opacity: 0.8;
+    }
+
+    a.home-link {
+      display: inline-block;
+      margin-bottom: 15px;
+      color: #bbb;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    a.home-link:hover {
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="admin_dashboard.html" class="home-link">⬅ Back to Dashboard</a>
+    <h2>Edit Residential Water Rates</h2>
+
+    <table>
+      <tr><th>Consumption Block</th><th>New Rate (₱)</th></tr>
+      <tr><td>0–5 (Minimum)</td><td><input type="number" id="rate0_5" value="194"></td></tr>
+      <tr><td>6 cubic</td><td><input type="number" id="rate6" value="224"></td></tr>
+      <tr><td>7 cubic</td><td><input type="number" id="rate7" value="254"></td></tr>
+      <tr><td>8 cubic</td><td><input type="number" id="rate8" value="284"></td></tr>
+      <tr><td>9 cubic</td><td><input type="number" id="rate9" value="314"></td></tr>
+      <tr><td>10 cubic</td><td><input type="number" id="rate10" value="344"></td></tr>
+      <tr><td>11–20 (per cu.m.)</td><td><input type="number" id="rate11_20" value="36"></td></tr>
+      <tr><td>21–30 (per cu.m.)</td><td><input type="number" id="rate21_30" value="40"></td></tr>
+      <tr><td>31–40 (per cu.m.)</td><td><input type="number" id="rate31_40" value="44"></td></tr>
+      <tr><td>41–50 (per cu.m.)</td><td><input type="number" id="rate41_50" value="48"></td></tr>
+      <tr><td>51-up (per cu.m.)</td><td><input type="number" id="rate51_up" value="52"></td></tr>
+    </table>
+
+    <button onclick="saveRates()">💾 Save Rates</button>
+
+    <div class="nav">
+      <p>➡ Go to <a href="viewer_admin.html">View Rates Page</a></p>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    function saveRates() {
+      let rates = {
+        r0_5: parseFloat(document.getElementById("rate0_5").value),
+        r6: parseFloat(document.getElementById("rate6").value),
+        r7: parseFloat(document.getElementById("rate7").value),
+        r8: parseFloat(document.getElementById("rate8").value),
+        r9: parseFloat(document.getElementById("rate9").value),
+        r10: parseFloat(document.getElementById("rate10").value),
+        r11_20: parseFloat(document.getElementById("rate11_20").value),
+        r21_30: parseFloat(document.getElementById("rate21_30").value),
+        r31_40: parseFloat(document.getElementById("rate31_40").value),
+        r41_50: parseFloat(document.getElementById("rate41_50").value),
+        r51_up: parseFloat(document.getElementById("rate51_up").value)
+      };
+      database.ref('residential_water_rates').set(rates)
+        .then(() => alert("✅ Rates saved successfully!"))
+        .catch((error) => {
+          console.error(error);
+          alert("❌ Error saving rates. Check console.");
+        });
+    }
+
+    window.onload = function() {
+      database.ref('residential_water_rates').once('value', (snapshot) => {
+        const currentRates = snapshot.val();
+        if (currentRates) {
+          document.getElementById("rate0_5").value = currentRates.r0_5 || "194";
+          document.getElementById("rate6").value = currentRates.r6 || "224";
+          document.getElementById("rate7").value = currentRates.r7 || "254";
+          document.getElementById("rate8").value = currentRates.r8 || "284";
+          document.getElementById("rate9").value = currentRates.r9 || "314";
+          document.getElementById("rate10").value = currentRates.r10 || "344";
+          document.getElementById("rate11_20").value = currentRates.r11_20 || "36";
+          document.getElementById("rate21_30").value = currentRates.r21_30 || "40";
+          document.getElementById("rate31_40").value = currentRates.r31_40 || "44";
+          document.getElementById("rate41_50").value = currentRates.r41_50 || "48";
+          document.getElementById("rate51_up").value = currentRates.r51_up || "52";
+        }
+      });
+    };
+  </script>
+</body>
+</html>

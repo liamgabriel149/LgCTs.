@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Residence Switch Monitoring - FB Pro Style</title>
+  <style>
+    /* ================== Reset & Body ================== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #18191a;
+      color: #e4e6eb;
+      padding: 20px;
+    }
+
+    /* ================== Header ================== */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    h2 {
+      font-size: 28px;
+      color: #fff;
+    }
+
+    .home-btn {
+      padding: 10px 20px;
+      background-color: #3a3b3c;
+      color: #e4e6eb;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 8px;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .home-btn:hover {
+      background-color: #4b4c4d;
+      transform: translateY(-2px);
+    }
+
+    /* ================== Dropdown ================== */
+    .filter-container {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    select {
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background-color: #242526;
+      color: #e4e6eb;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    select:hover {
+      background-color: #3a3b3c;
+    }
+
+    /* ================== Grid Container ================== */
+    #switchContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 18px;
+    }
+
+    /* ================== User Card ================== */
+    .user-switch {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #242526;
+      padding: 15px 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .user-switch:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+    }
+
+    .user-switch span:first-child {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .switch-status {
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      text-align: center;
+      min-width: 80px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .on {
+      color: #42b72a;
+      background-color: #1e4621;
+    }
+
+    .off {
+      color: #f02849;
+      background-color: #4b1c1c;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<div class="header">
+  <h2>Residence Users Status</h2>
+  <a href="employee.html" class="home-btn">🏠 Home</a>
+</div>
+
+<!-- ===== Filter Dropdown ===== -->
+<div class="filter-container">
+  <label for="statusFilter">Filter: </label>
+  <select id="statusFilter">
+    <option value="all">All</option>
+    <option value="on">Active</option>
+    <option value="off">Inactive</option>
+  </select>
+</div>
+
+<!-- ===== Switch Grid ===== -->
+<div id="switchContainer">Loading residence users...</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  // ======= Firebase Configuration =======
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const container = document.getElementById('switchContainer');
+  const filterSelect = document.getElementById('statusFilter');
+  let usersList = [];
+
+  // ======= Fetch Residence Users =======
+  db.ref('users').once('value').then(snapshot => {
+    const usersData = snapshot.val();
+    if (!usersData) {
+      container.innerHTML = "No users found.";
+      return;
+    }
+
+    Object.entries(usersData).forEach(([userId, user]) => {
+      if (user.role === 'residence' && user.switchPath) {
+        const div = document.createElement('div');
+        div.className = 'user-switch';
+        div.id = userId;
+        div.dataset.status = 'off'; // default
+        div.innerHTML = `
+          <span>${user.username}</span>
+          <span class="switch-status off">Inactive</span>
+        `;
+        container.appendChild(div);
+        usersList.push({id: userId, element: div, switchPath: user.switchPath});
+      }
+    });
+
+    // Real-time monitoring
+    usersList.forEach(user => {
+      db.ref(user.switchPath).on('value', snap => {
+        const isOn = snap.val();
+        const statusEl = user.element.querySelector('.switch-status');
+        statusEl.textContent = isOn ? "Active" : "Inactive";
+        statusEl.className = `switch-status ${isOn ? 'on' : 'off'}`;
+        user.element.dataset.status = isOn ? 'on' : 'off';
+        filterUsers();
+      });
+    });
+  }).catch(err => {
+    container.innerHTML = "Error loading users: " + err.message;
+  });
+
+  // ======= Filter Function =======
+  function filterUsers() {
+    const filter = filterSelect.value;
+    usersList.forEach(user => {
+      if (filter === 'all' || user.element.dataset.status === filter) {
+        user.element.style.display = 'flex';
+      } else {
+        user.element.style.display = 'none';
+      }
+    });
+  }
+
+  filterSelect.addEventListener('change', filterUsers);
+</script>
+
+</body>
+</html>
