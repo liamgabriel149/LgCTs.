@@ -4,355 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Employee Dashboard</title>
-  <style>
-    body {
-      margin: 0;
-      background: url("3.jpg") no-repeat center center fixed;
-      background-size: cover;
-      font-family: 'Segoe UI', sans-serif;
-      color: #fff;
-      padding: 20px;
-      backdrop-filter: blur(6px);
-    }
-
-    h1 {
-      text-align: center;
-      margin: 80px 0 30px;
-      color: #00eaff;
-      font-size: 28px;
-      text-shadow: 0 0 12px rgba(0, 234, 255, 0.8);
-    }
-
-    /* Navbar */
-    .navbar {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 20px;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-      z-index: 100;
-    }
-    .navbar button {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .add-btn {
-      background: linear-gradient(135deg, #00eaff, #0095f6);
-      color: white;
-      box-shadow: 0 0 10px rgba(0, 234, 255, 0.6);
-    }
-    .add-btn:hover {
-      background: linear-gradient(135deg, #0095f6, #007dd1);
-      transform: scale(1.05);
-    }
-    .logout-btn {
-      background: rgba(255, 77, 77, 0.85);
-      color: #fff;
-      box-shadow: 0 0 10px rgba(255, 77, 77, 0.6);
-    }
-    .logout-btn:hover {
-      background: rgba(229, 57, 53, 0.95);
-      transform: scale(1.05);
-    }
-
-    /* Notification Banner */
-    .top-notif {
-      display: none;
-      position: fixed;
-      top: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #00eaff;
-      color: black;
-      padding: 10px 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      z-index: 2000;
-      animation: fadeIn 0.5s ease;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translate(-50%, -20px); }
-      to { opacity: 1; transform: translate(-50%, 0); }
-    }
-
-    /* Modal Popup */
-    .modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(6px);
-      z-index: 200;
-    }
-    .modal-content {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(14px);
-      padding: 20px;
-      border-radius: 16px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      text-align: center;
-      animation: slideDown 0.3s ease;
-    }
-    @keyframes slideDown {
-      from { transform: translateY(-50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    .modal h3 {
-      margin-bottom: 15px;
-      color: #00eaff;
-      text-shadow: 0 0 8px rgba(0, 234, 255, 0.6);
-    }
-    .modal input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      background: rgba(255, 255, 255, 0.85);
-      border: none;
-      border-radius: 8px;
-      color: black;
-      font-size: 14px;
-      outline: none;
-    }
-    .modal button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
-      background: linear-gradient(135deg, #00eaff, #0095f6);
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .modal button:hover {
-      background: linear-gradient(135deg, #0095f6, #007dd1);
-    }
-    .close-btn {
-      margin-top: 8px;
-      background: rgba(255, 77, 77, 0.85);
-    }
-    .close-btn:hover {
-      background: rgba(229, 57, 53, 0.95);
-    }
-
-    /* Account list */
-    .account-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      padding: 0 10px;
-    }
-    .meter-card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(0, 234, 255, 0.2);
-      text-align: center;
-      transition: 0.3s;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      position: relative;
-    }
-    .meter-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 12px 30px rgba(0, 234, 255, 0.35);
-    }
-
-    .circle-meter {
-      width: 160px;
-      height: 160px;
-      margin: 0 auto;
-      border-radius: 50%;
-      background: rgba(0, 234, 255, 0.05);
-      border: 4px solid #00eaff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 0 20px rgba(0, 234, 255, 0.6);
-    }
-    .circle-meter .value {
-      font-size: 30px;
-      font-weight: bold;
-      color: #ffffff;
-      text-shadow: 0 0 8px #00eaff;
-    }
-    .circle-meter .unit {
-      font-size: 13px;
-      color: #b0e0e6;
-    }
-
-    /* Notification button */
-    .notif-btn {
-      margin-top: 10px;
-      padding: 6px 12px;
-      font-size: 13px;
-      border: none;
-      border-radius: 6px;
-      background: #00eaff;
-      color: black;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .notif-btn:hover {
-      background: #0095f6;
-      color: white;
-    }
-
-    /* Popup box */
-    .notif-popup {
-      display: none;
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      width: 220px;
-      background: rgba(0,0,0,0.85);
-      border-radius: 12px;
-      padding: 10px;
-      color: white;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
-      z-index: 999;
-    }
-    .notif-popup textarea {
-      width: 100%;
-      padding: 8px;
-      border: none;
-      border-radius: 6px;
-      resize: none;
-      outline: none;
-      font-size: 13px;
-      margin-bottom: 6px;
-    }
-    .notif-popup button {
-      margin: 3px;
-      padding: 6px 10px;
-      font-size: 13px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .notif-popup .closeN {
-      background: #ff4d4d;
-      color: white;
-      float: right;
-    }
-    .notif-popup .closeN:hover {
-      background: #d32f2f;
-    }
-    .notif-popup button:not(.closeN) {
-      background: #00eaff;
-      color: black;
-    }
-    .notif-popup button:not(.closeN):hover {
-      background: #0095f6;
-      color: white;
-    }
-
-    /* Chat popup */
-    .chat-popup {
-      display: none;
-      position: fixed;
-      bottom: 80px;
-      right: 20px;
-      width: 320px;
-      background: rgba(0,0,0,0.9);
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 1000;
-    }
-    .chat-header {
-      background: #00eaff;
-      color: black;
-      padding: 10px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .chat-messages {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      max-height: 250px;
-    }
-    .chat-messages div {
-      margin-bottom: 8px;
-      padding: 8px 12px;
-      border-radius: 10px;
-      max-width: 75%;
-      word-wrap: break-word;
-    }
-    .sent { background:#0095f6; color:white; margin-left:auto; }
-    .received { background:#374151; color:#e5e7eb; margin-right:auto; }
-    .chat-form { display:flex; border-top:1px solid #374151; }
-    .chat-form input { flex:1; padding:10px; border:none; background:#111827; color:white; }
-    .chat-form button { background:#0095f6; border:none; color:white; padding:10px 15px; }
-
-    /* Notification Popup */
-    #notifWrapper {
-      position: relative;
-      cursor: pointer;
-      margin-right: 10px;
-    }
-    #notifCount {
-      background: red;
-      border-radius: 50%;
-      padding: 2px 6px;
-      font-size: 12px;
-      vertical-align: top;
-      margin-left: 4px;
-      display: none;
-    }
-
-    #notifPopup {
-      display: none;
-      position: absolute;
-      top: 40px;
-      right: 0;
-      width: 300px;
-      max-height: 400px;
-      overflow-y: auto;
-      background: rgba(0,0,0,0.9);
-      color: white;
-      border-radius: 10px;
-      padding: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      z-index: 1000;
-    }
-
-    #notifList {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    #notifList li {
-      padding: 6px;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-    }
-
-    /* Responsive */
-    @media (max-width: 480px) {
-      h1 { font-size: 22px; }
-      .circle-meter { width: 120px; height: 120px; }
-      .circle-meter .value { font-size: 22px; }
-    }
-  </style>
+<link rel="stylesheet" href="employee.css">
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -363,6 +15,7 @@
   <!-- Navbar -->
   <div class="navbar">
     <button class="add-btn" onclick="openModal()">+ Add Residence</button>
+    <a href="status.html" class="status-btn">Users status</a>
     <div id="notifWrapper">
       🔔 <span id="notifCount">0</span>
     </div>
@@ -378,7 +31,7 @@
   <div class="top-notif" id="topNotif"></div>
 
   <h1>Welcome, Employee</h1>
-
+  <div id="usersDiv"></div>
   <!-- Modal -->
   <div class="modal" id="addModal">
     <div class="modal-content">
@@ -394,6 +47,8 @@
   </div>
 
   <div class="account-list" id="residenceList"></div>
+    
+
 
   <!-- Chat Popup -->
   <div id="chatPopup" class="chat-popup">
@@ -603,6 +258,9 @@
       if (msg.sender !== username) addNotification(`New message from ${msg.sender}: ${msg.text}`);
     });
   });
+
+  
+  
 </script>
 </body>
 </html>
