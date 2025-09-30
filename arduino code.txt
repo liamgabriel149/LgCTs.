@@ -16,10 +16,10 @@
 #define USER_PASSWORD "liambayot66@gmail.com"
 
 // ======== Device Paths ========
-const String deviceRoot = "sensor27";
-const String deviceID   = "-00005";
+const String deviceRoot = "sensor3";
+const String deviceID   = "-00003";
 
-String basePath, counterPath, logPath, switchPath, alertPath;
+String basePath, counterPath, litersPath, logPath, switchPath, alertPath;
 
 // ======== Flow Sensor ========
 #define FLOW_SENSOR_PIN 27
@@ -30,7 +30,7 @@ const float pulsesPerLiter = 450.0f;
 float accumulatedLiters = 0.0f;
 const float litersPerCubicMeter = 1000.0f;
 
-int counter = 0;
+int counter = 0;           // cubic meters
 bool switchStatus = true;
 bool alreadySentSMS = false;
 
@@ -78,25 +78,36 @@ void sendSMSToAll(const String &message) {
 // ======== Build Paths ========
 void buildPaths() {
   basePath    = "/" + deviceRoot + "/" + deviceID;
-  counterPath = basePath + "/water_timer_counter/value";
+  counterPath = basePath + "/water_timer_counter/value";  // cubic meters
+  litersPath  = basePath + "/water_timer_liters/value";   // liters
   logPath     = basePath + "/water_timer_counter/logs";
   switchPath  = basePath + "/control_switch/value";
   alertPath   = basePath + "/water_alerts";
 }
 
 // ======== Update Counter ========
-void updateFirebaseCounter(int value, unsigned long pulses) {
+void updateFirebaseCounter(int value, float liters, unsigned long pulses) {
   if (!Firebase.ready()) return;
 
+  // update cubic meter counter
   if (!Firebase.setInt(fbdo, counterPath, value)) {
     Serial.printf("❌ setInt failed: %s\n", fbdo.errorReason().c_str());
   } else {
-    Serial.printf("✅ Counter set to %d\n", value);
+    Serial.printf("✅ Counter set to %d m³\n", value);
   }
 
-  if (pulses > 0) { // only log if flow detected
+  // update liters
+  if (!Firebase.setFloat(fbdo, litersPath, liters)) {
+    Serial.printf("❌ setFloat failed: %s\n", fbdo.errorReason().c_str());
+  } else {
+    Serial.printf("✅ Liters set to %.2f L\n", liters);
+  }
+
+  // log only if pulses detected
+  if (pulses > 0) {
     FirebaseJson json;
     json.set("pulses", (int)pulses);
+    json.set("liters", liters);
     json.set("timestamp/.sv", "timestamp");
     if (!Firebase.pushJSON(fbdo, logPath, json)) {
       Serial.printf("❌ pushJSON failed: %s\n", fbdo.errorReason().c_str());
@@ -163,7 +174,11 @@ void setup() {
 
     if (Firebase.getInt(fbdo, counterPath)) {
       counter = fbdo.intData();
-      Serial.printf("📥 Loaded counter: %d\n", counter);
+      Serial.printf("📥 Loaded counter: %d m³\n", counter);
+    }
+    if (Firebase.getFloat(fbdo, litersPath)) {
+      accumulatedLiters = fbdo.floatData();
+      Serial.printf("📥 Loaded liters: %.2f L\n", accumulatedLiters);
     }
     if (Firebase.getBool(fbdo, switchPath)) {
       switchStatus = fbdo.boolData();
@@ -189,17 +204,17 @@ void loop() {
     float litersThisSecond = (float)currentPulses / pulsesPerLiter;
     accumulatedLiters += litersThisSecond;
 
-    Serial.printf("💧 L/s: %.3f | Acc: %.3f L\n", litersThisSecond, accumulatedLiters);
+    Serial.printf("💧 L/s: %.3f | Total: %.2f L | m³: %d\n",
+                  litersThisSecond, accumulatedLiters, counter);
 
     if (accumulatedLiters >= litersPerCubicMeter) {
       counter++;
       accumulatedLiters -= litersPerCubicMeter;
       Serial.printf("✅ 1m³ reached. Counter: %d\n", counter);
-      if (Firebase.ready()) updateFirebaseCounter(counter, currentPulses);
-    } else {
-      if (Firebase.ready() && currentPulses > 0) {
-        updateFirebaseCounter(counter, currentPulses);
-      }
+    }
+
+    if (Firebase.ready()) {
+      updateFirebaseCounter(counter, accumulatedLiters, currentPulses);
     }
 
     // Leak detection
