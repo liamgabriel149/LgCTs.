@@ -381,6 +381,21 @@
       <span class="slider"></span>
     </label>
   </div>
+    
+    <!-- Liters Display Card -->
+<div id="litersCard" style="
+  max-width: 400px;
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  margin-top: -1rem;
+  color: #e0e7ff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+">
+  <h2 style="margin:0 0 1rem; color:#22c55e;">Liters Reading</h2>
+  <p><strong>Current:</strong> <span id="litersReading">0.000</span> L</p>
+</div>
+
 
   <!-- Bill Summary Card -->
 <div id="billCard" style="
@@ -750,6 +765,67 @@ chatRef.on("child_added", snap => {
     document.getElementById("billConsumption").textContent = currentConsumption + " m³";
     document.getElementById("billAmount").textContent = "₱" + bill.toFixed(2);
   }
+      
+      
+// System Notification Utility
+async function fireSystemNotification(title, message) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg) {
+      reg.showNotification(title, {
+        body: message,
+        icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+        vibrate: [100, 50, 100],
+        tag: "chat-message",
+        renotify: true,
+      });
+    }
+  }
+}
+
+      chatRef.on("child_added", snap => {
+  const msg = snap.val();
+  const div = document.createElement("div");
+  div.className = msg.sender === currentUser ? "sent" : "received";
+  div.textContent = `${msg.sender}: ${msg.text}`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  // Show browser notification if message is from someone else
+  if (msg.sender !== currentUser) {
+    fireSystemNotification("New Message", `${msg.sender}: ${msg.text}`);
+  }
+});
+ 
+      
+      // Request notification permission
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+
+// Register service worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("sw.js")
+    .then(reg => {
+      console.log("Service Worker registered", reg.scope);
+    })
+    .catch(err => {
+      console.error("Service Worker registration failed", err);
+    });
+}
+ 
+      
+      // Liters path
+const litersPath = sensorPath.replace("water_timer_counter/value", "water_timer_liters/value");
+const litersRef = db.ref(litersPath);
+
+// Listen for liters updates
+litersRef.on("value", snap => {
+  const liters = Number(snap.val()) || 0;
+  document.getElementById("litersReading").textContent = liters.toFixed(3);
+});
 
   </script>
 </body>
