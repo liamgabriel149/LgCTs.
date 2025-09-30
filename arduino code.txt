@@ -1,0 +1,223 @@
+#include <Arduino.h>
+#include <WiFi.h>
+#include <FirebaseESP32.h>
+#include <addons/TokenHelper.h>
+#include <addons/RTDBHelper.h>
+#include <HardwareSerial.h>  // SIM900A
+
+// ======== Wifi ========
+#define WIFI_SSID "Voidborne"
+#define WIFI_PASSWORD "Li@mG@briel2025"
+
+// ======== Firebase ========
+#define API_KEY "AIzaSyDXNrUVM1VBaXOg2ZmkIFE9BKxexxBmpIs"
+#define DATABASE_URL "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
+#define USER_EMAIL "liambayot66@gmail.com"
+#define USER_PASSWORD "liambayot66@gmail.com"
+
+// ======== Device Paths ========
+const String deviceRoot = "sensor27";
+const String deviceID   = "-00005";
+
+String basePath, counterPath, logPath, switchPath, alertPath;
+
+// ======== Flow Sensor ========
+#define FLOW_SENSOR_PIN 27
+volatile unsigned long pulseCount = 0;
+unsigned long lastMillis = 0;
+
+const float pulsesPerLiter = 450.0f;
+float accumulatedLiters = 0.0f;
+const float litersPerCubicMeter = 1000.0f;
+
+int counter = 0;
+bool switchStatus = true;
+bool alreadySentSMS = false;
+
+// ======== Firebase Objects ========
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
+// ======== SIM900 (RX=23, TX=22) ========
+HardwareSerial sim900(1);
+
+// ======== Interrupt ========
+void IRAM_ATTR pulseCounter() {
+  pulseCount++;
+}
+
+// ======== SIM900 Helpers ========
+void sim900AT(const char *cmd, unsigned long waitMs = 500) {
+  sim900.println(cmd);
+  delay(waitMs);
+}
+
+void sendSMS(const char* number, const String &message) {
+  sim900AT("AT", 1000);
+  sim900AT("AT+CMGF=1", 1000);
+  sim900.print("AT+CMGS=\"");
+  sim900.print(number);
+  sim900.println("\"");
+  delay(1000);
+  sim900.print(message);
+  delay(500);
+  sim900.write(26); // Ctrl-Z
+  delay(5000);
+}
+
+void sendSMSToAll(const String &message) {
+  const char* numbers[] = { "09661672593", "09165950969" };
+  for (size_t i = 0; i < (sizeof(numbers)/sizeof(numbers[0])); ++i) {
+    Serial.printf("📲 Sending SMS to %s...\n", numbers[i]);
+    sendSMS(numbers[i], message);
+    delay(2000);
+  }
+}
+
+// ======== Build Paths ========
+void buildPaths() {
+  basePath    = "/" + deviceRoot + "/" + deviceID;
+  counterPath = basePath + "/water_timer_counter/value";
+  logPath     = basePath + "/water_timer_counter/logs";
+  switchPath  = basePath + "/control_switch/value";
+  alertPath   = basePath + "/water_alerts";
+}
+
+// ======== Update Counter ========
+void updateFirebaseCounter(int value, unsigned long pulses) {
+  if (!Firebase.ready()) return;
+
+  if (!Firebase.setInt(fbdo, counterPath, value)) {
+    Serial.printf("❌ setInt failed: %s\n", fbdo.errorReason().c_str());
+  } else {
+    Serial.printf("✅ Counter set to %d\n", value);
+  }
+
+  if (pulses > 0) { // only log if flow detected
+    FirebaseJson json;
+    json.set("pulses", (int)pulses);
+    json.set("timestamp/.sv", "timestamp");
+    if (!Firebase.pushJSON(fbdo, logPath, json)) {
+      Serial.printf("❌ pushJSON failed: %s\n", fbdo.errorReason().c_str());
+    } else {
+      Serial.println("📌 Log pushed.");
+    }
+  }
+}
+
+// ======== Send Alert ========
+void sendFlowAlert(unsigned long pulses) {
+  if (!Firebase.ready()) return;
+
+  FirebaseJson alertJson;
+  alertJson.set("message", "🚨 Water flow detected while switch is OFF!");
+  alertJson.set("pulses", (int)pulses);
+  alertJson.set("timestamp/.sv", "timestamp");
+
+  if (!Firebase.pushJSON(fbdo, alertPath, alertJson)) {
+    Serial.printf("❌ push alert failed: %s\n", fbdo.errorReason().c_str());
+  } else {
+    Serial.println("🚨 Alert pushed.");
+  }
+}
+
+// ======== Setup ========
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+
+  buildPaths();
+  Serial.println("Base path: " + basePath);
+
+  pinMode(FLOW_SENSOR_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), pulseCounter, FALLING);
+
+  // SIM900A
+  sim900.begin(9600, SERIAL_8N1, 23, 22);
+  delay(1000);
+  sim900AT("AT", 1000);
+  sim900AT("ATE0", 1000);
+
+  // WiFi
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting Wi-Fi");
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 40) {
+    Serial.print(".");
+    delay(250);
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\n✅ Wi-Fi connected: " + WiFi.localIP().toString());
+
+    config.api_key = API_KEY;
+    config.database_url = DATABASE_URL;
+    auth.user.email = USER_EMAIL;
+    auth.user.password = USER_PASSWORD;
+    config.token_status_callback = tokenStatusCallback;
+
+    Firebase.begin(&config, &auth);
+    Firebase.reconnectWiFi(true);
+
+    if (Firebase.getInt(fbdo, counterPath)) {
+      counter = fbdo.intData();
+      Serial.printf("📥 Loaded counter: %d\n", counter);
+    }
+    if (Firebase.getBool(fbdo, switchPath)) {
+      switchStatus = fbdo.boolData();
+      Serial.printf("📥 Switch: %s\n", switchStatus ? "ON" : "OFF");
+    }
+  } else {
+    Serial.println("\n❌ Wi-Fi failed. SMS only mode.");
+  }
+
+  lastMillis = millis();
+}
+
+// ======== Loop ========
+void loop() {
+  unsigned long now = millis();
+  if (now - lastMillis >= 1000) {
+
+    noInterrupts();
+    unsigned long currentPulses = pulseCount;
+    pulseCount = 0;
+    interrupts();
+
+    float litersThisSecond = (float)currentPulses / pulsesPerLiter;
+    accumulatedLiters += litersThisSecond;
+
+    Serial.printf("💧 L/s: %.3f | Acc: %.3f L\n", litersThisSecond, accumulatedLiters);
+
+    if (accumulatedLiters >= litersPerCubicMeter) {
+      counter++;
+      accumulatedLiters -= litersPerCubicMeter;
+      Serial.printf("✅ 1m³ reached. Counter: %d\n", counter);
+      if (Firebase.ready()) updateFirebaseCounter(counter, currentPulses);
+    } else {
+      if (Firebase.ready() && currentPulses > 0) {
+        updateFirebaseCounter(counter, currentPulses);
+      }
+    }
+
+    // Leak detection
+    if (Firebase.ready() && Firebase.getBool(fbdo, switchPath)) {
+      switchStatus = fbdo.boolData();
+    }
+
+    if (!switchStatus && currentPulses > 0) {
+      if (!alreadySentSMS) {
+        Serial.println("🚨 Flow while switch OFF!");
+        sendSMSToAll("🚨 Water flow detected while switch is OFF!");
+        if (Firebase.ready()) sendFlowAlert(currentPulses);
+        alreadySentSMS = true;
+      }
+    } else {
+      alreadySentSMS = false;
+    }
+
+    lastMillis = now;
+  }
+}
