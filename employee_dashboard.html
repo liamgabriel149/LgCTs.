@@ -115,10 +115,9 @@
     chatInput.value = "";
   });
 
-async function loadAllUserMeters() {
+  async function loadAllUserMeters() {
   const list = document.getElementById("residenceList");
   list.innerHTML = "";
-
   const snapshot = await db.ref("users").once("value");
   const users = snapshot.val() || {};
 
@@ -127,44 +126,28 @@ async function loadAllUserMeters() {
     if (user.role !== "residence" || !user.sensorRoot) continue;
 
     const sensorRoot = user.sensorRoot;
+
     const sensorRef = db.ref(sensorRoot);
     const sensorSnapshot = await sensorRef.once("value");
     const sensorData = sensorSnapshot.val();
 
     if (!sensorData) continue;
 
+    // Get the first sensor device key (e.g., "-00002")
     const firstKey = Object.keys(sensorData)[0];
     if (!firstKey) continue;
 
-    const waterBasePath = `${sensorRoot}/${firstKey}`;
-    const waterPath = `${waterBasePath}/water_timer_counter`;
+    const waterPath = `${sensorRoot}/${firstKey}/water_timer_counter/value`;
 
-    const deviceSnap = await db.ref(waterBasePath).once("value");
-    const deviceData = deviceSnap.val();
-
-    const controlSwitch = deviceData?.control_switch?.value ?? 'N/A';
-    const alerts = deviceData?.water_alerts ? Object.values(deviceData.water_alerts) : [];
-    const counter = deviceData?.water_timer_counter?.value ?? 0;
-    const logs = deviceData?.water_timer_counter?.logs ? Object.values(deviceData.water_timer_counter.logs) : [];
-
-    const totalPulses = logs.reduce((sum, log) => sum + (log.pulses || 0), 0);
-    const totalLiters = logs.reduce((sum, log) => sum + (log.liters || 0), 0);
-
-    // UI card container
+    // UI card
     const card = document.createElement("div");
-    card.className = "residence-card";
+    card.className = "meter-card";
     card.innerHTML = `
-      <div class="residence-header">
-        ${user.username} (ID: ${uid})
-        <span><strong>Switch: ${controlSwitch ? 'ON' : 'OFF'}</strong></span>
-      </div>
-
       <div class="circle-meter">
-        <div class="value">Loading...</div>
+        <div class="value">...</div>
         <div class="unit">Liters</div>
         <div class="cubic-value">... m³</div>
       </div>
-
       <div class="username">${user.username}</div>
       <div class="role">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</div>
       <button class="notif-btn" onclick="toggleNotif('${uid}')">🔔 Notify</button>
@@ -174,47 +157,20 @@ async function loadAllUserMeters() {
         <button onclick="sendNotif('${uid}')">Send</button>
         <button class="closeN" onclick="toggleNotif('${uid}')">×</button>
       </div>
-
-      <p><strong>Sensor Root:</strong> ${sensorRoot}</p>
-      <p><strong>Total Pulses:</strong> ${totalPulses}</p>
-      <p><strong>Total Liters:</strong> ${totalLiters.toFixed(3)} L</p>
-      <p><strong>Counter Value:</strong> ${counter}</p>
-
-      <h4>Recent Logs:</h4>
-      <table>
-        <thead>
-          <tr><th>Time</th><th>Pulses</th><th>Liters</th></tr>
-        </thead>
-        <tbody>
-          ${logs.slice(-5).reverse().map(log => `
-            <tr>
-              <td>${formatDate(log.timestamp)}</td>
-              <td>${log.pulses || 0}</td>
-              <td>${log.liters !== undefined ? log.liters.toFixed(3) : '-'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-
-      <h4>Alerts:</h4>
-      ${alerts.length > 0 ? `
-        <ul class="alerts">
-          ${alerts.map(alert => `
-            <li>${formatDate(alert.timestamp)} - ${alert.message} (pulses: ${alert.pulses})</li>
-          `).join('')}
-        </ul>` : '<p>No alerts.</p>'}
     `;
 
     list.appendChild(card);
 
-    // Real-time liters update from value field
     const litersEl = card.querySelector(".value");
     const cubicEl = card.querySelector(".cubic-value");
 
-    db.ref(`${waterPath}/value`).on("value", (snap) => {
+    db.ref(waterPath).on("value", (snap) => {
       const pulses = snap.val();
+
+      // Conversion logic: assume 1 pulse = 0.00222 liters
       const liters = pulses * 0.00222;
       const cubicMeters = liters / 1000;
+
       litersEl.textContent = `${liters.toFixed(2)}`;
       cubicEl.textContent = `${cubicMeters.toFixed(3)} m³`;
     }, () => {
@@ -226,13 +182,6 @@ async function loadAllUserMeters() {
   if (list.innerHTML === "") {
     list.innerHTML = "<p>No users with meters found.</p>";
   }
-}
-
-// Helper: format timestamp
-function formatDate(ts) {
-  if (!ts) return '-';
-  const d = new Date(ts);
-  return d.toLocaleString();
 }
 
 
@@ -469,4 +418,3 @@ function formatDate(ts) {
 </script>
 </body>
 </html>
-
