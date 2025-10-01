@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Employee Dashboard</title>
-<link rel="stylesheet" href="employee.css">
+  <link rel="stylesheet" href="employee.css">
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -48,8 +48,6 @@
 
   <div class="account-list" id="residenceList"></div>
     
-
-
   <!-- Chat Popup -->
   <div id="chatPopup" class="chat-popup">
     <div class="chat-header">
@@ -118,56 +116,74 @@
   });
 
   async function loadAllUserMeters() {
-    const list = document.getElementById("residenceList");
-    list.innerHTML = "";
-    const snapshot = await db.ref("users").once("value");
-    const users = snapshot.val() || {};
+  const list = document.getElementById("residenceList");
+  list.innerHTML = "";
+  const snapshot = await db.ref("users").once("value");
+  const users = snapshot.val() || {};
 
-    for (const uid in users) {
-      const user = users[uid];
-      let sensorPath = null;
+  for (const uid in users) {
+    const user = users[uid];
+    if (user.role !== "residence" || !user.sensorRoot) continue;
 
-      if (user.role === "residence" && user.sensorRoot) {
-        sensorPath = `${user.sensorRoot}/${uid}/water_timer_counter/value`;
-      } else if (user.sensorPath) {
-        sensorPath = user.sensorPath;
-      }
+    const sensorRoot = user.sensorRoot;
 
-      if (!sensorPath) continue;
+    const sensorRef = db.ref(sensorRoot);
+    const sensorSnapshot = await sensorRef.once("value");
+    const sensorData = sensorSnapshot.val();
 
-      const card = document.createElement("div");
-      card.className = "meter-card";
-      card.innerHTML = `
-        <div class="circle-meter">
-          <div class="value">...</div>
-          <div class="unit">Liters</div>
-        </div>
-        <div class="username">${user.username}</div>
-        <div class="role">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</div>
-        <button class="notif-btn" onclick="toggleNotif('${uid}')">🔔 Notify</button>
-        <button class="notif-btn" onclick="openChat('${user.username}')">💬 Chat</button>
-        <div class="notif-popup" id="notif-${uid}">
-          <textarea placeholder="Enter message..."></textarea>
-          <button onclick="sendNotif('${uid}')">Send</button>
-          <button class="closeN" onclick="toggleNotif('${uid}')">×</button>
-        </div>
-      `;
+    if (!sensorData) continue;
 
-      list.appendChild(card);
+    // Get the first sensor device key (e.g., "-00002")
+    const firstKey = Object.keys(sensorData)[0];
+    if (!firstKey) continue;
 
-      const valueEl = card.querySelector(".value");
-      db.ref(sensorPath).on("value", (snap) => {
-        const val = snap.val();
-        valueEl.textContent = val !== null ? val : "0";
-      }, () => {
-        valueEl.textContent = "N/A";
-      });
-    }
+    const waterPath = `${sensorRoot}/${firstKey}/water_timer_counter/value`;
 
-    if (list.innerHTML === "") {
-      list.innerHTML = "<p>No users with meters found.</p>";
-    }
+    // UI card
+    const card = document.createElement("div");
+    card.className = "meter-card";
+    card.innerHTML = `
+      <div class="circle-meter">
+        <div class="value">...</div>
+        <div class="unit">Liters</div>
+        <div class="cubic-value">... m³</div>
+      </div>
+      <div class="username">${user.username}</div>
+      <div class="role">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</div>
+      <button class="notif-btn" onclick="toggleNotif('${uid}')">🔔 Notify</button>
+      <button class="notif-btn" onclick="openChat('${user.username}')">💬 Chat</button>
+      <div class="notif-popup" id="notif-${uid}">
+        <textarea placeholder="Enter message..."></textarea>
+        <button onclick="sendNotif('${uid}')">Send</button>
+        <button class="closeN" onclick="toggleNotif('${uid}')">×</button>
+      </div>
+    `;
+
+    list.appendChild(card);
+
+    const litersEl = card.querySelector(".value");
+    const cubicEl = card.querySelector(".cubic-value");
+
+    db.ref(waterPath).on("value", (snap) => {
+      const pulses = snap.val();
+
+      // Conversion logic: assume 1 pulse = 0.00222 liters
+      const liters = pulses * 0.00222;
+      const cubicMeters = liters / 1000;
+
+      litersEl.textContent = `${liters.toFixed(2)}`;
+      cubicEl.textContent = `${cubicMeters.toFixed(3)} m³`;
+    }, () => {
+      litersEl.textContent = "N/A";
+      cubicEl.textContent = "N/A";
+    });
   }
+
+  if (list.innerHTML === "") {
+    list.innerHTML = "<p>No users with meters found.</p>";
+  }
+}
+
 
   function toggleNotif(uid) {
     const popup = document.getElementById(`notif-${uid}`);
@@ -219,48 +235,186 @@
 
   loadAllUserMeters();
 
-  // ===== Notification Popup Code =====
+  // ===== Notification System =====
   const notifWrapper = document.getElementById("notifWrapper");
   const notifCountEl = document.getElementById("notifCount");
   const notifPopup = document.getElementById("notifPopup");
   const notifList = document.getElementById("notifList");
 
-  let notifications = [];
+  let notifications = []; // array of objects { id, message }
+  let unreadCount = 0;
+  let notifPopupVisible = false;
 
-  function addNotification(message) {
-    notifications.unshift(message); // newest first
-    notifCountEl.textContent = notifications.length;
-    notifCountEl.style.display = "inline-block";
+  // Simulate employee ID (in real use, get from auth/session)
+  const employeeId = "employee_123";
 
-    // Update popup list
-    notifList.innerHTML = "";
-    notifications.forEach(msg => {
+  // Get hidden notifications for this employee from localStorage
+  function getHiddenNotifications() {
+    const hidden = localStorage.getItem(`hiddenNotifs_${employeeId}`);
+    return hidden ? JSON.parse(hidden) : [];
+  }
+
+  // Save hidden notifications list
+  function setHiddenNotifications(hiddenIds) {
+    localStorage.setItem(`hiddenNotifs_${employeeId}`, JSON.stringify(hiddenIds));
+  }
+
+  // Hide notif count initially
+  notifCountEl.style.display = "none";
+  notifCountEl.textContent = "0";
+
+  // Render notifications
+  function renderNotifications() {
+    notifList.innerHTML = ""; // clear list
+
+    const hiddenIds = getHiddenNotifications();
+
+    // Filter notifications not hidden for this employee
+    const visibleNotifications = notifications.filter(notif => !hiddenIds.includes(notif.id));
+
+    visibleNotifications.forEach(notif => {
       const li = document.createElement("li");
-      li.textContent = msg;
+      li.style.display = "flex";
+      li.style.justifyContent = "space-between";
+      li.style.alignItems = "center";
+      li.style.padding = "4px 8px";
+      li.style.borderBottom = "1px solid #eee";
+
+      const span = document.createElement("span");
+      span.textContent = notif.message;
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "×";
+      delBtn.style.background = "none";
+      delBtn.style.border = "none";
+      delBtn.style.color = "red";
+      delBtn.style.fontWeight = "bold";
+      delBtn.style.cursor = "pointer";
+      delBtn.title = "Delete notification";
+
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+
+        // Remove notification from array
+        notifications = notifications.filter(n => n.id !== notif.id);
+
+        // Add to hidden IDs to persist removal
+        const hiddenIds = getHiddenNotifications();
+        if (!hiddenIds.includes(notif.id)) {
+          hiddenIds.push(notif.id);
+          setHiddenNotifications(hiddenIds);
+        }
+
+        // Re-render the list
+        renderNotifications();
+
+        // Update unread count if popup hidden
+        if (!notifPopupVisible) {
+          unreadCount = Math.max(0, unreadCount - 1);
+          notifCountEl.textContent = unreadCount;
+          if (unreadCount === 0) {
+            notifCountEl.style.display = "none";
+          }
+        }
+      };
+
+      li.appendChild(span);
+      li.appendChild(delBtn);
       notifList.appendChild(li);
     });
   }
 
+  // Add a new notification
+  function addNotification(message) {
+    const id = Date.now().toString(); // unique ID
+    const newNotif = { id, message };
+    notifications.unshift(newNotif);
+
+    // Update unread count only if popup hidden
+    if (!notifPopupVisible) {
+      unreadCount++;
+      notifCountEl.textContent = unreadCount;
+      notifCountEl.style.display = "inline-block";
+    }
+
+    renderNotifications();
+  }
+
+  // Toggle popup & reset counter
   notifWrapper.onclick = () => {
-    notifPopup.style.display = notifPopup.style.display === "block" ? "none" : "block";
-    notifCountEl.textContent = "0";
-    notifCountEl.style.display = "none";
+    notifPopupVisible = !notifPopupVisible;
+    notifPopup.style.display = notifPopupVisible ? "block" : "none";
+
+    if (notifPopupVisible) {
+      unreadCount = 0;
+      notifCountEl.textContent = "0";
+      notifCountEl.style.display = "none";
+    }
   };
 
-  // Listen for Firebase messages to show in notification popup
-  const chatsRefPopup = firebase.database().ref("chats");
-  chatsRefPopup.on("child_added", snapshot => {
-    const chatId = snapshot.key;
-    const messagesRef = chatsRefPopup.child(chatId);
+  // For testing, add some initial notifications
+  addNotification("Welcome to the system");
+  addNotification("You have 3 new messages");
+  addNotification("Server maintenance tonight");
 
-    messagesRef.on("child_added", msgSnap => {
+  // Call renderNotifications on page load to ensure state is correctly updated
+  renderNotifications();
+
+  ////////////////////////////////////////////////////
+
+  // Listen for Firebase new chat messages to add notifications
+  const chatsRef = db.ref("chats");
+  chatsRef.on("child_added", (chatSnapshot) => {
+    const chatId = chatSnapshot.key;
+    const messagesRef = chatsRef.child(chatId);
+
+    messagesRef.on("child_added", (msgSnap) => {
       const msg = msgSnap.val();
-      if (msg.sender !== username) addNotification(`New message from ${msg.sender}: ${msg.text}`);
+      if (msg.sender !== username) {
+        const notifText = `New message from ${msg.sender}: ${msg.text}`;
+        addNotification(notifText);
+        fireSystemNotification(`New message from ${msg.sender}`, msg.text);
+      }
     });
   });
 
-  
-  
+  // Browser notification with service worker
+  async function fireSystemNotification(title, message) {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        reg.showNotification(title, {
+          body: message,
+          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+          vibrate: [100, 50, 100],
+          tag: "chat-message",
+          renotify: true,
+        });
+      }
+    }
+  }
+
+  // Request notification permission if not granted
+  if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
+
+  // Register Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register("sw.js")
+      .then(reg => {
+        console.log("Service Worker registered", reg.scope);
+      })
+      .catch(err => {
+        console.error("Service Worker registration failed", err);
+      });
+  }
+
+  // Initial load
+  loadAllUserMeters();
+
 </script>
 </body>
 </html>
