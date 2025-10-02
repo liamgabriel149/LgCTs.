@@ -102,3 +102,28 @@ chatRef.limitToLast(1).on("child_added", snap => {
          });
     }
 });
+
+
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  console.log("Service Worker activated");
+});
+
+// Handle notification clicks
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      if (clientList.length > 0) {
+        let client = clientList[0];
+        return client.focus();
+      }
+      return clients.openWindow("index.html"); // redirect if no window open
+    })
+  );
+});
+
+
