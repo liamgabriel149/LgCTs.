@@ -161,4 +161,13 @@ self.addEventListener("notificationclick", event => {
 });
 
 
+// sw.js
+self.addEventListener("install", event => { self.skipWaiting(); });
+self.addEventListener("activate", event => { console.log("SW activated"); });
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow("/")); // open dashboard
+});
+
 
