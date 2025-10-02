@@ -1,10 +1,10 @@
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Employee Dashboard</title>
-  <link rel="stylesheet" href="employee.css">
+<link rel="stylesheet" href="employee.css">
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -48,6 +48,8 @@
 
   <div class="account-list" id="residenceList"></div>
     
+
+
   <!-- Chat Popup -->
   <div id="chatPopup" class="chat-popup">
     <div class="chat-header">
@@ -116,48 +118,56 @@
   });
 
   async function loadAllUserMeters() {
-      const list = document.getElementById("residenceList");
-      list.innerHTML = "";
-      const snapshot = await db.ref("users").once("value");
-      const users = snapshot.val() || {};
+    const list = document.getElementById("residenceList");
+    list.innerHTML = "";
+    const snapshot = await db.ref("users").once("value");
+    const users = snapshot.val() || {};
 
-      for (const uid in users) {
-        const user = users[uid];
-        if (!user.sensorPath) continue;
+    for (const uid in users) {
+      const user = users[uid];
+      let sensorPath = null;
 
-        const card = document.createElement("div");
-        card.className = "meter-card";
-        card.innerHTML = `
-          <div class="circle-meter">
-            <div class="value">...</div>
-            <div class="unit">Liters</div>
-          </div>
-          <div class="username">${user.username}</div>
-          <div class="role">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</div>
-        `;
-
-        list.appendChild(card);
-
-        const valueEl = card.querySelector(".value");
-
-        // Listen for realtime sensor data changes
-        db.ref(user.sensorPath).on(
-          "value",
-          snap => {
-            const val = snap.val();
-            valueEl.textContent = val !== null ? val : "0";
-          },
-          () => {
-            valueEl.textContent = "N/A";
-          }
-        );
+      if (user.role === "residence" && user.sensorRoot) {
+        sensorPath = `${user.sensorRoot}/${uid}/water_timer_counter/value`;
+      } else if (user.sensorPath) {
+        sensorPath = user.sensorPath;
       }
 
-      if (!list.hasChildNodes()) {
-        list.innerHTML = "<p>No users with meters found.</p>";
-      }
+      if (!sensorPath) continue;
+
+      const card = document.createElement("div");
+      card.className = "meter-card";
+      card.innerHTML = `
+        <div class="circle-meter">
+          <div class="value">...</div>
+          <div class="unit">Liters</div>
+        </div>
+        <div class="username">${user.username}</div>
+        <div class="role">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</div>
+        <button class="notif-btn" onclick="toggleNotif('${uid}')">🔔 Notify</button>
+        <button class="notif-btn" onclick="openChat('${user.username}')">💬 Chat</button>
+        <div class="notif-popup" id="notif-${uid}">
+          <textarea placeholder="Enter message..."></textarea>
+          <button onclick="sendNotif('${uid}')">Send</button>
+          <button class="closeN" onclick="toggleNotif('${uid}')">×</button>
+        </div>
+      `;
+
+      list.appendChild(card);
+
+      const valueEl = card.querySelector(".value");
+      db.ref(sensorPath).on("value", (snap) => {
+        const val = snap.val();
+        valueEl.textContent = val !== null ? val : "0";
+      }, () => {
+        valueEl.textContent = "N/A";
+      });
     }
 
+    if (list.innerHTML === "") {
+      list.innerHTML = "<p>No users with meters found.</p>";
+    }
+  }
 
   function toggleNotif(uid) {
     const popup = document.getElementById(`notif-${uid}`);
@@ -209,7 +219,7 @@
 
   loadAllUserMeters();
 
-  // ===== Notification System =====
+   // ===== Notification System =====
   const notifWrapper = document.getElementById("notifWrapper");
   const notifCountEl = document.getElementById("notifCount");
   const notifPopup = document.getElementById("notifPopup");
@@ -388,7 +398,6 @@
 
   // Initial load
   loadAllUserMeters();
-
 </script>
 </body>
 </html>
