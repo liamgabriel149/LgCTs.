@@ -303,21 +303,43 @@
     Notification.requestPermission();
   }
 
-  // Register Service Worker
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register("sw.js")
-      .then(reg => {
-        console.log("Service Worker registered", reg.scope);
-      })
-      .catch(err => {
-        console.error("Service Worker registration failed", err);
-      });
-  }
+ let swRegistration = null;
 
-  // Initial load
-  loadAllUserMeters();
+  
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("sw.js")
+    .then(reg => {
+      swRegistration = reg;
+      console.log("Service Worker registered", reg.scope);
+    })
+    .catch(err => {
+      console.error("Service Worker registration failed", err);
+    });
+}
+
+  async function fireSystemNotification(title, message) {
+  if (!("Notification" in window)) return;
+
+  if (Notification.permission === "granted" && swRegistration) {
+    swRegistration.showNotification(title, {
+      body: message,
+      icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+      vibrate: [100, 50, 100],
+      tag: "chat-message",
+      renotify: true,
+    });
+  }
+}
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission().then(permission => {
+    console.log("Notification permission:", permission);
+  });
+}
+
+
   
 </script>
 </body>
 </html>
+
