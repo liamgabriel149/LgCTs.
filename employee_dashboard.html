@@ -219,185 +219,101 @@
 
   loadAllUserMeters();
 
-   // ===== Notification System =====
+  // ===== Notification Popup Code =====
   const notifWrapper = document.getElementById("notifWrapper");
   const notifCountEl = document.getElementById("notifCount");
   const notifPopup = document.getElementById("notifPopup");
   const notifList = document.getElementById("notifList");
 
-  let notifications = []; // array of objects { id, message }
-  let unreadCount = 0;
-  let notifPopupVisible = false;
+  let notifications = [];
 
-  // Simulate employee ID (in real use, get from auth/session)
-  const employeeId = "employee_123";
+  function addNotification(message) {
+    notifications.unshift(message); // newest first
+    notifCountEl.textContent = notifications.length;
+    notifCountEl.style.display = "inline-block";
 
-  // Get hidden notifications for this employee from localStorage
-  function getHiddenNotifications() {
-    const hidden = localStorage.getItem(`hiddenNotifs_${employeeId}`);
-    return hidden ? JSON.parse(hidden) : [];
-  }
-
-  // Save hidden notifications list
-  function setHiddenNotifications(hiddenIds) {
-    localStorage.setItem(`hiddenNotifs_${employeeId}`, JSON.stringify(hiddenIds));
-  }
-
-  // Hide notif count initially
-  notifCountEl.style.display = "none";
-  notifCountEl.textContent = "0";
-
-  // Render notifications
-  function renderNotifications() {
-    notifList.innerHTML = ""; // clear list
-
-    const hiddenIds = getHiddenNotifications();
-
-    // Filter notifications not hidden for this employee
-    const visibleNotifications = notifications.filter(notif => !hiddenIds.includes(notif.id));
-
-    visibleNotifications.forEach(notif => {
+    // Update popup list
+    notifList.innerHTML = "";
+    notifications.forEach(msg => {
       const li = document.createElement("li");
-      li.style.display = "flex";
-      li.style.justifyContent = "space-between";
-      li.style.alignItems = "center";
-      li.style.padding = "4px 8px";
-      li.style.borderBottom = "1px solid #eee";
-
-      const span = document.createElement("span");
-      span.textContent = notif.message;
-
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "×";
-      delBtn.style.background = "none";
-      delBtn.style.border = "none";
-      delBtn.style.color = "red";
-      delBtn.style.fontWeight = "bold";
-      delBtn.style.cursor = "pointer";
-      delBtn.title = "Delete notification";
-
-      delBtn.onclick = (e) => {
-        e.stopPropagation();
-
-        // Remove notification from array
-        notifications = notifications.filter(n => n.id !== notif.id);
-
-        // Add to hidden IDs to persist removal
-        const hiddenIds = getHiddenNotifications();
-        if (!hiddenIds.includes(notif.id)) {
-          hiddenIds.push(notif.id);
-          setHiddenNotifications(hiddenIds);
-        }
-
-        // Re-render the list
-        renderNotifications();
-
-        // Update unread count if popup hidden
-        if (!notifPopupVisible) {
-          unreadCount = Math.max(0, unreadCount - 1);
-          notifCountEl.textContent = unreadCount;
-          if (unreadCount === 0) {
-            notifCountEl.style.display = "none";
-          }
-        }
-      };
-
-      li.appendChild(span);
-      li.appendChild(delBtn);
+      li.textContent = msg;
       notifList.appendChild(li);
     });
   }
 
-  // Add a new notification
-  function addNotification(message) {
-    const id = Date.now().toString(); // unique ID
-    const newNotif = { id, message };
-    notifications.unshift(newNotif);
-
-    // Update unread count only if popup hidden
-    if (!notifPopupVisible) {
-      unreadCount++;
-      notifCountEl.textContent = unreadCount;
-      notifCountEl.style.display = "inline-block";
-    }
-
-    renderNotifications();
-  }
-
-  // Toggle popup & reset counter
   notifWrapper.onclick = () => {
-    notifPopupVisible = !notifPopupVisible;
-    notifPopup.style.display = notifPopupVisible ? "block" : "none";
-
-    if (notifPopupVisible) {
-      unreadCount = 0;
-      notifCountEl.textContent = "0";
-      notifCountEl.style.display = "none";
-    }
+    notifPopup.style.display = notifPopup.style.display === "block" ? "none" : "block";
+    notifCountEl.textContent = "0";
+    notifCountEl.style.display = "none";
   };
 
-  // For testing, add some initial notifications
-  addNotification("Welcome to the system");
-  addNotification("You have 3 new messages");
-  addNotification("Server maintenance tonight");
+  // Listen for Firebase messages to show in notification popup
+  const chatsRefPopup = firebase.database().ref("chats");
+  chatsRefPopup.on("child_added", snapshot => {
+    const chatId = snapshot.key;
+    const messagesRef = chatsRefPopup.child(chatId);
 
-  // Call renderNotifications on page load to ensure state is correctly updated
-  renderNotifications();
-
-  ////////////////////////////////////////////////////
-
-  // Listen for Firebase new chat messages to add notifications
-  const chatsRef = db.ref("chats");
-  chatsRef.on("child_added", (chatSnapshot) => {
-    const chatId = chatSnapshot.key;
-    const messagesRef = chatsRef.child(chatId);
-
-    messagesRef.on("child_added", (msgSnap) => {
+    messagesRef.on("child_added", msgSnap => {
       const msg = msgSnap.val();
-      if (msg.sender !== username) {
-        const notifText = `New message from ${msg.sender}: ${msg.text}`;
-        addNotification(notifText);
-        fireSystemNotification(`New message from ${msg.sender}`, msg.text);
-      }
+      if (msg.sender !== username) addNotification(`New message from ${msg.sender}: ${msg.text}`);
     });
   });
 
-  // Browser notification with service worker
-  async function fireSystemNotification(title, message) {
-    if (!("Notification" in window)) return;
-    if (Notification.permission === "granted") {
-      const reg = await navigator.serviceWorker.getRegistration();
-      if (reg) {
-        reg.showNotification(title, {
-          body: message,
-          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
-          vibrate: [100, 50, 100],
-          tag: "chat-message",
-          renotify: true,
-        });
-      }
+  // Fire system notification using Service Worker
+async function fireSystemNotification(title, message) {
+  if (!("Notification" in window)) return;
+  
+  // Permission check
+  if (Notification.permission === "granted") {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg) {
+      reg.showNotification(title, {
+        body: message,
+        icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+        vibrate: [100, 50, 100],
+        tag: "chat-message",
+        renotify: true,
+      });
     }
   }
+}
 
-  // Request notification permission if not granted
-  if ("Notification" in window && Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
+// Request notification permission
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission().then(permission => {
+    console.log("Notification permission:", permission);
+  });
+}
 
-  // Register Service Worker
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register("sw.js")
-      .then(reg => {
-        console.log("Service Worker registered", reg.scope);
-      })
-      .catch(err => {
-        console.error("Service Worker registration failed", err);
-      });
-  }
+// Register Service Worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("/sw.js") // Make sure path is correct on GitHub Pages
+    .then(reg => {
+      console.log("Service Worker registered", reg.scope);
+    })
+    .catch(err => {
+      console.error("Service Worker registration failed", err);
+    });
+}
 
-  // Initial load
-  loadAllUserMeters();
+// Example: Fire notification when a new chat message arrives
+function newChatMessage(sender, text) {
+  fireSystemNotification(`New message from ${sender}`, text);
+  // Also show top banner in your dashboard
+  const topNotif = document.getElementById("topNotif");
+  topNotif.textContent = `${sender}: ${text}`;
+  topNotif.style.display = "block";
+  setTimeout(() => { topNotif.style.display = "none"; }, 4000);
+}
+
+// Example usage: simulate receiving a message
+setTimeout(() => {
+  newChatMessage("John Doe", "Hello Employee!");
+}, 3000);
+
+  
+  
 </script>
 </body>
 </html>
