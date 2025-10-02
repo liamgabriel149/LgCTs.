@@ -127,3 +127,38 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 
+// sw.js - Service Worker
+
+self.addEventListener("install", event => {
+  console.log("Service Worker installed");
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", event => {
+  console.log("Service Worker activated");
+});
+
+// Listen for push events (if using FCM or custom push)
+self.addEventListener("push", event => {
+  const data = event.data?.json() || {};
+  const title = data.title || "New Notification";
+  const options = {
+    body: data.body || "You have a new message",
+    icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+    vibrate: [100, 50, 100],
+    tag: "chat-message",
+    renotify: true,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Optional: handle notification click
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow("/") // Open dashboard or homepage
+  );
+});
+
+
+
