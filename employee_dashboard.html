@@ -259,61 +259,60 @@
     });
   });
 
-  // Fire system notification using Service Worker
+ // Register Service Worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js")
+    .then(reg => console.log("SW registered:", reg.scope))
+    .catch(err => console.error("SW registration failed:", err));
+}
+
+// Request Notification permission
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+
+// Fire system notification
 async function fireSystemNotification(title, message) {
-  if (!("Notification" in window)) return;
-  
-  // Permission check
-  if (Notification.permission === "granted") {
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (reg) {
-      reg.showNotification(title, {
-        body: message,
-        icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
-        vibrate: [100, 50, 100],
-        tag: "chat-message",
-        renotify: true,
-      });
-    }
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (reg) {
+    reg.showNotification(title, {
+      body: message,
+      icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+      vibrate: [100, 50, 100],
+      tag: "chat-message",
+      renotify: true,
+    });
   }
 }
 
-// Request notification permission
-if ("Notification" in window && Notification.permission !== "granted") {
-  Notification.requestPermission().then(permission => {
-    console.log("Notification permission:", permission);
+// Firebase chat listener
+const username = "Employee"; // current user
+let chatRef = null;
+
+function openChat(resName) {
+  const chatId = `${resName}_${username}`;
+  chatRef = firebase.database().ref("chats/" + chatId);
+
+  chatRef.on("child_added", snap => {
+    const msg = snap.val();
+    if (msg.sender !== username) {
+      // Show system notification for messages from residence
+      fireSystemNotification(`New message from ${msg.sender}`, msg.text);
+
+      // Optional: show top banner in dashboard
+      const topNotif = document.getElementById("topNotif");
+      topNotif.textContent = `${msg.sender}: ${msg.text}`;
+      topNotif.style.display = "block";
+      setTimeout(() => { topNotif.style.display = "none"; }, 4000);
+    }
   });
 }
 
-// Register Service Worker
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker
-    .register("/sw.js") // Make sure path is correct on GitHub Pages
-    .then(reg => {
-      console.log("Service Worker registered", reg.scope);
-    })
-    .catch(err => {
-      console.error("Service Worker registration failed", err);
-    });
-}
+// Example: Open a chat with a residence
+// openChat("John"); // call this dynamically when user clicks chat
 
-// Example: Fire notification when a new chat message arrives
-function newChatMessage(sender, text) {
-  fireSystemNotification(`New message from ${sender}`, text);
-  // Also show top banner in your dashboard
-  const topNotif = document.getElementById("topNotif");
-  topNotif.textContent = `${sender}: ${text}`;
-  topNotif.style.display = "block";
-  setTimeout(() => { topNotif.style.display = "none"; }, 4000);
-}
-
-// Example usage: simulate receiving a message
-setTimeout(() => {
-  newChatMessage("John Doe", "Hello Employee!");
-}, 3000);
-
-  
-  
 </script>
 </body>
 </html>
+
