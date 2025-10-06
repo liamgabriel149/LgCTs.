@@ -219,44 +219,23 @@
 
   loadAllUserMeters();
 
-   // ===== Notification System =====
+  // ===== NOTIFICATION SYSTEM =====
   const notifWrapper = document.getElementById("notifWrapper");
   const notifCountEl = document.getElementById("notifCount");
   const notifPopup = document.getElementById("notifPopup");
   const notifList = document.getElementById("notifList");
 
-  let notifications = []; // array of objects { id, message }
+  let notifications = []; 
   let unreadCount = 0;
   let notifPopupVisible = false;
 
-  // Simulate employee ID (in real use, get from auth/session)
-  const employeeId = "employee_123";
-
-  // Get hidden notifications for this employee from localStorage
-  function getHiddenNotifications() {
-    const hidden = localStorage.getItem(`hiddenNotifs_${employeeId}`);
-    return hidden ? JSON.parse(hidden) : [];
-  }
-
-  // Save hidden notifications list
-  function setHiddenNotifications(hiddenIds) {
-    localStorage.setItem(`hiddenNotifs_${employeeId}`, JSON.stringify(hiddenIds));
-  }
-
-  // Hide notif count initially
   notifCountEl.style.display = "none";
-  notifCountEl.textContent = "0";
 
-  // Render notifications
+  // Render notifications with delete button
   function renderNotifications() {
-    notifList.innerHTML = ""; // clear list
+    notifList.innerHTML = "";
 
-    const hiddenIds = getHiddenNotifications();
-
-    // Filter notifications not hidden for this employee
-    const visibleNotifications = notifications.filter(notif => !hiddenIds.includes(notif.id));
-
-    visibleNotifications.forEach(notif => {
+    notifications.forEach(notif => {
       const li = document.createElement("li");
       li.style.display = "flex";
       li.style.justifyContent = "space-between";
@@ -274,31 +253,20 @@
       delBtn.style.color = "red";
       delBtn.style.fontWeight = "bold";
       delBtn.style.cursor = "pointer";
-      delBtn.title = "Delete notification";
 
-      delBtn.onclick = (e) => {
+      delBtn.onclick = async (e) => {
         e.stopPropagation();
 
-        // Remove notification from array
-        notifications = notifications.filter(n => n.id !== notif.id);
+        try {
+          // Delete from Firebase
+          await db.ref("notifications/" + notif.id).remove();
 
-        // Add to hidden IDs to persist removal
-        const hiddenIds = getHiddenNotifications();
-        if (!hiddenIds.includes(notif.id)) {
-          hiddenIds.push(notif.id);
-          setHiddenNotifications(hiddenIds);
-        }
-
-        // Re-render the list
-        renderNotifications();
-
-        // Update unread count if popup hidden
-        if (!notifPopupVisible) {
-          unreadCount = Math.max(0, unreadCount - 1);
-          notifCountEl.textContent = unreadCount;
-          if (unreadCount === 0) {
-            notifCountEl.style.display = "none";
-          }
+          // Remove from local list
+          notifications = notifications.filter(n => n.id !== notif.id);
+          renderNotifications();
+        } catch (err) {
+          console.error("Failed to delete notification:", err);
+          alert("Error deleting notification: " + err.message);
         }
       };
 
@@ -308,13 +276,11 @@
     });
   }
 
-  // Add a new notification
-  function addNotification(message) {
-    const id = Date.now().toString(); // unique ID
+  // Add notification (from Firebase or manually)
+  function addNotification(id, message) {
     const newNotif = { id, message };
     notifications.unshift(newNotif);
 
-    // Update unread count only if popup hidden
     if (!notifPopupVisible) {
       unreadCount++;
       notifCountEl.textContent = unreadCount;
@@ -324,7 +290,7 @@
     renderNotifications();
   }
 
-  // Toggle popup & reset counter
+  // Toggle popup
   notifWrapper.onclick = () => {
     notifPopupVisible = !notifPopupVisible;
     notifPopup.style.display = notifPopupVisible ? "block" : "none";
@@ -336,31 +302,20 @@
     }
   };
 
-  // For testing, add some initial notifications
-  addNotification("Welcome to the system");
-  addNotification("You have 3 new messages");
-  addNotification("Server maintenance tonight");
-
-  // Call renderNotifications on page load to ensure state is correctly updated
-  renderNotifications();
-
-  ////////////////////////////////////////////////////
-
-  // Listen for Firebase new chat messages to add notifications
-  const chatsRef = db.ref("chats");
-  chatsRef.on("child_added", (chatSnapshot) => {
-    const chatId = chatSnapshot.key;
-    const messagesRef = chatsRef.child(chatId);
-
-    messagesRef.on("child_added", (msgSnap) => {
-      const msg = msgSnap.val();
-      if (msg.sender !== username) {
-        const notifText = `New message from ${msg.sender}: ${msg.text}`;
-        addNotification(notifText);
-        fireSystemNotification(`New message from ${msg.sender}`, msg.text);
-      }
-    });
+  // Listen for notifications from Firebase
+  const notifRef = db.ref("notifications");
+  notifRef.on("child_added", snap => {
+    const id = snap.key;
+    const message = snap.val();
+    addNotification(id, message);
   });
+
+  notifRef.on("child_removed", snap => {
+    const id = snap.key;
+    notifications = notifications.filter(n => n.id !== id);
+    renderNotifications();
+  });
+
 
   // Browser notification with service worker
   async function fireSystemNotification(title, message) {
@@ -396,7 +351,7 @@
       });
   }
 
+  // Initial load
 </script>
 </body>
 </html>
-
