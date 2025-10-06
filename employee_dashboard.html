@@ -1,357 +1,401 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Employee Dashboard</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Employee Dashboard</title>
 <link rel="stylesheet" href="employee.css">
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
-  <!-- Navbar -->
-  <div class="navbar">
-    <button class="add-btn" onclick="openModal()">+ Add Residence</button>
-    <a href="status.html" class="status-btn">Users status</a>
-    <div id="notifWrapper">
-      🔔 <span id="notifCount">0</span>
-    </div>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+<!-- Navbar -->
+<div class="navbar">
+<button class="add-btn" onclick="openModal()">+ Add Residence</button>
+<a href="status.html" class="status-btn">Users status</a>
+<div id="notifWrapper">
+🔔 <span id="notifCount">0</span>
+</div>
+<button class="logout-btn" onclick="logout()">Logout</button>
 
-    <!-- Notification Popup -->
-    <div id="notifPopup">
-      <ul id="notifList"></ul>
-    </div>
-  </div>
+<!-- Notification Popup -->
+<div id="notifPopup">
+<ul id="notifList"></ul>
+</div>
+</div>
 
-  <!-- Notification Banner -->
-  <div class="top-notif" id="topNotif"></div>
+<!-- Notification Banner -->
+<div class="top-notif" id="topNotif"></div>
 
-  <h1>Welcome, Employee</h1>
-  <div id="usersDiv"></div>
-  <!-- Modal -->
-  <div class="modal" id="addModal">
-    <div class="modal-content">
-      <h3>Add Residence Account</h3>
-      <form id="residenceForm">
-        <input type="text" id="resUsername" placeholder="Username" required />
-        <input type="password" id="resPassword" placeholder="Password" required />
-        <input type="text" id="sensorRoot" placeholder="Sensor Root (e.g., sensorsX)" required />
-        <button type="submit">Add Residence</button>
-        <button type="button" class="close-btn" onclick="closeModal()">Cancel</button>
-      </form>
-    </div>
-  </div>
+<h1>Welcome, Employee</h1>
+<div id="usersDiv"></div>
+<!-- Modal -->
+<div class="modal" id="addModal">
+<div class="modal-content">
+<h3>Add Residence Account</h3>
+<form id="residenceForm">
+<input type="text" id="resUsername" placeholder="Username" required />
+<input type="password" id="resPassword" placeholder="Password" required />
+<input type="text" id="sensorRoot" placeholder="Sensor Root (e.g., sensorsX)" required />
+<button type="submit">Add Residence</button>
+<button type="button" class="close-btn" onclick="closeModal()">Cancel</button>
+</form>
+</div>
+</div>
 
-  <div class="account-list" id="residenceList"></div>
-    
+<div class="account-list" id="residenceList"></div>
 
 
-  <!-- Chat Popup -->
-  <div id="chatPopup" class="chat-popup">
-    <div class="chat-header">
-      <span id="chatWith">Chat</span>
-      <button id="closeChat">×</button>
-    </div>
-    <div id="chatMessages" class="chat-messages"></div>
-    <form id="chatForm" class="chat-form">
-      <input type="text" id="chatInput" placeholder="Type..." required />
-      <button type="submit">Send</button>
-    </form>
-  </div>
+
+<!-- Chat Popup -->
+<div id="chatPopup" class="chat-popup">
+<div class="chat-header">
+<span id="chatWith">Chat</span>
+<button id="closeChat">×</button>
+</div>
+<div id="chatMessages" class="chat-messages"></div>
+<form id="chatForm" class="chat-form">
+<input type="text" id="chatInput" placeholder="Type..." required />
+<button type="submit">Send</button>
+</form>
+</div>
 
 <script>
-  const app = firebase.initializeApp({
-    databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
-  });
-  const db = firebase.database(app);
+const app = firebase.initializeApp({
+databaseURL: "https://waterbase-b1393-default-rtdb.asia-southeast1.firebasedatabase.app/"
+});
+const db = firebase.database(app);
 
-  // Modal
-  function openModal() { document.getElementById("addModal").style.display = "flex"; }
-  function closeModal() { document.getElementById("addModal").style.display = "none"; }
+// Modal
+function openModal() { document.getElementById("addModal").style.display = "flex"; }
+function closeModal() { document.getElementById("addModal").style.display = "none"; }
 
-  // Add Residence
-  document.getElementById("residenceForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-    const username = document.getElementById("resUsername").value.trim();
-    const password = document.getElementById("resPassword").value.trim();
-    const root = document.getElementById("sensorRoot").value.trim();
-    if (!username || !password || !root) return alert("All fields are required");
+// Add Residence
+document.getElementById("residenceForm").addEventListener("submit", async function (e) {
+e.preventDefault();
+const username = document.getElementById("resUsername").value.trim();
+const password = document.getElementById("resPassword").value.trim();
+const root = document.getElementById("sensorRoot").value.trim();
+if (!username || !password || !root) return alert("All fields are required");
 
-    const newUser = { username, password, role: "residence", sensorRoot: root };
-    try {
-      await db.ref("users").push(newUser);
-      alert("Residence account added!");
-      this.reset();
-      closeModal();
-      loadAllUserMeters();
-    } catch (err) {
-      alert("Error: " + err.message);
-    }
-  });
+const newUser = { username, password, role: "residence", sensorRoot: root };
+try {
+await db.ref("users").push(newUser);
+alert("Residence account added!");
+this.reset();
+closeModal();
+loadAllUserMeters();
+} catch (err) {
+alert("Error: " + err.message);
+}
+});
 
-  // Chat state
-  const username = "Employee";
-  let activeChatId = null;
-  let chatRef = null;
+// Chat state
+const username = "Employee";
+let activeChatId = null;
+let chatRef = null;
 
-  const chatPopup = document.getElementById("chatPopup");
-  const closeChat = document.getElementById("closeChat");
-  const chatMessages = document.getElementById("chatMessages");
-  const chatWith = document.getElementById("chatWith");
-  const chatForm = document.getElementById("chatForm");
-  const chatInput = document.getElementById("chatInput");
-  const topNotif = document.getElementById("topNotif");
+const chatPopup = document.getElementById("chatPopup");
+const closeChat = document.getElementById("closeChat");
+const chatMessages = document.getElementById("chatMessages");
+const chatWith = document.getElementById("chatWith");
+const chatForm = document.getElementById("chatForm");
+const chatInput = document.getElementById("chatInput");
+const topNotif = document.getElementById("topNotif");
 
-  closeChat.onclick = () => { chatPopup.style.display = "none"; if(chatRef) chatRef.off(); };
+closeChat.onclick = () => { chatPopup.style.display = "none"; if(chatRef) chatRef.off(); };
 
-  chatForm.addEventListener("submit", e => {
-    e.preventDefault();
-    if (!activeChatId) return;
-    const msg = chatInput.value.trim();
-    if (!msg) return;
-    chatRef.push({ sender: username, text: msg, timestamp: Date.now() });
-    chatInput.value = "";
-  });
+chatForm.addEventListener("submit", e => {
+e.preventDefault();
+if (!activeChatId) return;
+const msg = chatInput.value.trim();
+if (!msg) return;
+chatRef.push({ sender: username, text: msg, timestamp: Date.now() });
+chatInput.value = "";
+});
 
-  async function loadAllUserMeters() {
-    const list = document.getElementById("residenceList");
-    list.innerHTML = "";
-    const snapshot = await db.ref("users").once("value");
-    const users = snapshot.val() || {};
+async function loadAllUserMeters() {
+const list = document.getElementById("residenceList");
+list.innerHTML = "";
+const snapshot = await db.ref("users").once("value");
+const users = snapshot.val() || {};
 
-    for (const uid in users) {
-      const user = users[uid];
-      let sensorPath = null;
+for (const uid in users) {
+const user = users[uid];
+let sensorPath = null;
 
-      if (user.role === "residence" && user.sensorRoot) {
-        sensorPath = `${user.sensorRoot}/${uid}/water_timer_counter/value`;
-      } else if (user.sensorPath) {
-        sensorPath = user.sensorPath;
-      }
+if (user.role === "residence" && user.sensorRoot) {
+sensorPath = `${user.sensorRoot}/${uid}/water_timer_counter/value`;
+} else if (user.sensorPath) {
+sensorPath = user.sensorPath;
+}
 
-      if (!sensorPath) continue;
+if (!sensorPath) continue;
 
-      const card = document.createElement("div");
-      card.className = "meter-card";
-      card.innerHTML = `
-        <div class="circle-meter">
-          <div class="value">...</div>
-          <div class="unit">Liters</div>
-        </div>
-        <div class="username">${user.username}</div>
-        <div class="role">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</div>
-        <button class="notif-btn" onclick="toggleNotif('${uid}')">🔔 Notify</button>
-        <button class="notif-btn" onclick="openChat('${user.username}')">💬 Chat</button>
-        <div class="notif-popup" id="notif-${uid}">
-          <textarea placeholder="Enter message..."></textarea>
-          <button onclick="sendNotif('${uid}')">Send</button>
-          <button class="closeN" onclick="toggleNotif('${uid}')">×</button>
-        </div>
-      `;
+const card = document.createElement("div");
+card.className = "meter-card";
+card.innerHTML = `
+<div class="circle-meter">
+<div class="value">...</div>
+<div class="unit">Liters</div>
+</div>
+<div class="username">${user.username}</div>
+<div class="role">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</div>
+<button class="notif-btn" onclick="toggleNotif('${uid}')">🔔 Notify</button>
+<button class="notif-btn" onclick="openChat('${user.username}')">💬 Chat</button>
+<div class="notif-popup" id="notif-${uid}">
+<textarea placeholder="Enter message..."></textarea>
+<button onclick="sendNotif('${uid}')">Send</button>
+<button class="closeN" onclick="toggleNotif('${uid}')">×</button>
+</div>
+`;
 
-      list.appendChild(card);
+list.appendChild(card);
 
-      const valueEl = card.querySelector(".value");
-      db.ref(sensorPath).on("value", (snap) => {
-        const val = snap.val();
-        valueEl.textContent = val !== null ? val : "0";
-      }, () => {
-        valueEl.textContent = "N/A";
-      });
-    }
+const valueEl = card.querySelector(".value");
+db.ref(sensorPath).on("value", (snap) => {
+const val = snap.val();
+valueEl.textContent = val !== null ? val : "0";
+}, () => {
+valueEl.textContent = "N/A";
+});
+}
 
-    if (list.innerHTML === "") {
-      list.innerHTML = "<p>No users with meters found.</p>";
-    }
-  }
+if (list.innerHTML === "") {
+list.innerHTML = "<p>No users with meters found.</p>";
+}
+}
 
-  function toggleNotif(uid) {
-    const popup = document.getElementById(`notif-${uid}`);
-    popup.style.display = popup.style.display === "block" ? "none" : "block";
-  }
+function toggleNotif(uid) {
+const popup = document.getElementById(`notif-${uid}`);
+popup.style.display = popup.style.display === "block" ? "none" : "block";
+}
 
-  function sendNotif(uid) {
-    const popup = document.getElementById(`notif-${uid}`);
-    const textarea = popup.querySelector("textarea");
-    const message = textarea.value.trim();
-    if (!message) return alert("Message is empty!");
-    alert("Notification sent to " + uid + ": " + message);
-    textarea.value = "";
-    popup.style.display = "none";
-  }
+function sendNotif(uid) {
+const popup = document.getElementById(`notif-${uid}`);
+const textarea = popup.querySelector("textarea");
+const message = textarea.value.trim();
+if (!message) return alert("Message is empty!");
+alert("Notification sent to " + uid + ": " + message);
+textarea.value = "";
+popup.style.display = "none";
+}
 
-  // Chat
-  window.openChat = (resName) => {
-    activeChatId = `${resName}_${username}`;
-    chatWith.textContent = `Chat with ${resName}`;
-    chatMessages.innerHTML = "";
-    chatPopup.style.display = "flex";
+// Chat
+window.openChat = (resName) => {
+activeChatId = `${resName}_${username}`;
+chatWith.textContent = `Chat with ${resName}`;
+chatMessages.innerHTML = "";
+chatPopup.style.display = "flex";
 
-    if(chatRef) chatRef.off();
-    chatRef = db.ref("chats/" + activeChatId);
-    chatRef.on("child_added", snap => {
-      const msg = snap.val();
-      const div = document.createElement("div");
-      div.className = msg.sender === username ? "sent" : "received";
-      div.textContent = msg.text;
-      chatMessages.appendChild(div);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+if(chatRef) chatRef.off();
+chatRef = db.ref("chats/" + activeChatId);
+chatRef.on("child_added", snap => {
+const msg = snap.val();
+const div = document.createElement("div");
+div.className = msg.sender === username ? "sent" : "received";
+div.textContent = msg.text;
+chatMessages.appendChild(div);
+chatMessages.scrollTop = chatMessages.scrollHeight;
 
-      if (msg.sender !== username) showTopNotif(`New message from ${msg.sender}: ${msg.text}`);
-    });
-  };
+if (msg.sender !== username) showTopNotif(`New message from ${msg.sender}: ${msg.text}`);
+});
+};
 
-  function showTopNotif(message) {
-    topNotif.textContent = message;
-    topNotif.style.display = "block";
-    setTimeout(() => { topNotif.style.display = "none"; }, 4000);
-  }
+function showTopNotif(message) {
+topNotif.textContent = message;
+topNotif.style.display = "block";
+setTimeout(() => { topNotif.style.display = "none"; }, 4000);
+}
 
-  function logout() {
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.replace("index.html");
-  }
+function logout() {
+localStorage.clear();
+sessionStorage.clear();
+window.location.replace("index.html");
+}
 
-  loadAllUserMeters();
+loadAllUserMeters();
 
-  // ===== NOTIFICATION SYSTEM =====
-  const notifWrapper = document.getElementById("notifWrapper");
-  const notifCountEl = document.getElementById("notifCount");
-  const notifPopup = document.getElementById("notifPopup");
-  const notifList = document.getElementById("notifList");
+// ===== Notification System =====
+const notifWrapper = document.getElementById("notifWrapper");
+const notifCountEl = document.getElementById("notifCount");
+const notifPopup = document.getElementById("notifPopup");
+const notifList = document.getElementById("notifList");
 
-  let notifications = []; 
-  let unreadCount = 0;
-  let notifPopupVisible = false;
+let notifications = []; // array of objects { id, message }
+let unreadCount = 0;
+let notifPopupVisible = false;
 
-  notifCountEl.style.display = "none";
+// Simulate employee ID (in real use, get from auth/session)
+const employeeId = "employee_123";
 
-  // Render notifications with delete button
-  function renderNotifications() {
-    notifList.innerHTML = "";
+// Get hidden notifications for this employee from localStorage
+function getHiddenNotifications() {
+const hidden = localStorage.getItem(`hiddenNotifs_${employeeId}`);
+return hidden ? JSON.parse(hidden) : [];
+}
 
-    notifications.forEach(notif => {
-      const li = document.createElement("li");
-      li.style.display = "flex";
-      li.style.justifyContent = "space-between";
-      li.style.alignItems = "center";
-      li.style.padding = "4px 8px";
-      li.style.borderBottom = "1px solid #eee";
+// Save hidden notifications list
+function setHiddenNotifications(hiddenIds) {
+localStorage.setItem(`hiddenNotifs_${employeeId}`, JSON.stringify(hiddenIds));
+}
 
-      const span = document.createElement("span");
-      span.textContent = notif.message;
+// Hide notif count initially
+notifCountEl.style.display = "none";
+notifCountEl.textContent = "0";
 
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "×";
-      delBtn.style.background = "none";
-      delBtn.style.border = "none";
-      delBtn.style.color = "red";
-      delBtn.style.fontWeight = "bold";
-      delBtn.style.cursor = "pointer";
+// Render notifications
+function renderNotifications() {
+notifList.innerHTML = ""; // clear list
 
-      delBtn.onclick = async (e) => {
-        e.stopPropagation();
+const hiddenIds = getHiddenNotifications();
 
-        try {
-          // Delete from Firebase
-          await db.ref("notifications/" + notif.id).remove();
+// Filter notifications not hidden for this employee
+const visibleNotifications = notifications.filter(notif => !hiddenIds.includes(notif.id));
 
-          // Remove from local list
-          notifications = notifications.filter(n => n.id !== notif.id);
-          renderNotifications();
-        } catch (err) {
-          console.error("Failed to delete notification:", err);
-          alert("Error deleting notification: " + err.message);
-        }
-      };
+visibleNotifications.forEach(notif => {
+const li = document.createElement("li");
+li.style.display = "flex";
+li.style.justifyContent = "space-between";
+li.style.alignItems = "center";
+li.style.padding = "4px 8px";
+li.style.borderBottom = "1px solid #eee";
 
-      li.appendChild(span);
-      li.appendChild(delBtn);
-      notifList.appendChild(li);
-    });
-  }
+const span = document.createElement("span");
+span.textContent = notif.message;
 
-  // Add notification (from Firebase or manually)
-  function addNotification(id, message) {
-    const newNotif = { id, message };
-    notifications.unshift(newNotif);
+const delBtn = document.createElement("button");
+delBtn.textContent = "×";
+delBtn.style.background = "none";
+delBtn.style.border = "none";
+delBtn.style.color = "red";
+delBtn.style.fontWeight = "bold";
+delBtn.style.cursor = "pointer";
+delBtn.title = "Delete notification";
 
-    if (!notifPopupVisible) {
-      unreadCount++;
-      notifCountEl.textContent = unreadCount;
-      notifCountEl.style.display = "inline-block";
-    }
+delBtn.onclick = (e) => {
+e.stopPropagation();
 
-    renderNotifications();
-  }
+// Remove notification from array
+notifications = notifications.filter(n => n.id !== notif.id);
 
-  // Toggle popup
-  notifWrapper.onclick = () => {
-    notifPopupVisible = !notifPopupVisible;
-    notifPopup.style.display = notifPopupVisible ? "block" : "none";
+// Add to hidden IDs to persist removal
+const hiddenIds = getHiddenNotifications();
+if (!hiddenIds.includes(notif.id)) {
+hiddenIds.push(notif.id);
+setHiddenNotifications(hiddenIds);
+}
 
-    if (notifPopupVisible) {
-      unreadCount = 0;
-      notifCountEl.textContent = "0";
-      notifCountEl.style.display = "none";
-    }
-  };
+// Re-render the list
+renderNotifications();
 
-  // Listen for notifications from Firebase
-  const notifRef = db.ref("notifications");
-  notifRef.on("child_added", snap => {
-    const id = snap.key;
-    const message = snap.val();
-    addNotification(id, message);
-  });
+// Update unread count if popup hidden
+if (!notifPopupVisible) {
+unreadCount = Math.max(0, unreadCount - 1);
+notifCountEl.textContent = unreadCount;
+if (unreadCount === 0) {
+notifCountEl.style.display = "none";
+}
+}
+};
 
-  notifRef.on("child_removed", snap => {
-    const id = snap.key;
-    notifications = notifications.filter(n => n.id !== id);
-    renderNotifications();
-  });
+li.appendChild(span);
+li.appendChild(delBtn);
+notifList.appendChild(li);
+});
+}
 
+// Add a new notification
+function addNotification(message) {
+const id = Date.now().toString(); // unique ID
+const newNotif = { id, message };
+notifications.unshift(newNotif);
 
-  // Browser notification with service worker
-  async function fireSystemNotification(title, message) {
-    if (!("Notification" in window)) return;
-    if (Notification.permission === "granted") {
-      const reg = await navigator.serviceWorker.getRegistration();
-      if (reg) {
-        reg.showNotification(title, {
-          body: message,
-          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
-          vibrate: [100, 50, 100],
-          tag: "chat-message",
-          renotify: true,
-        });
-      }
-    }
-  }
+// Update unread count only if popup hidden
+if (!notifPopupVisible) {
+unreadCount++;
+notifCountEl.textContent = unreadCount;
+notifCountEl.style.display = "inline-block";
+}
 
-  // Request notification permission if not granted
-  if ("Notification" in window && Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
+renderNotifications();
+}
 
-  // Register Service Worker
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register("sw.js")
-      .then(reg => {
-        console.log("Service Worker registered", reg.scope);
-      })
-      .catch(err => {
-        console.error("Service Worker registration failed", err);
-      });
-  }
+// Toggle popup & reset counter
+notifWrapper.onclick = () => {
+notifPopupVisible = !notifPopupVisible;
+notifPopup.style.display = notifPopupVisible ? "block" : "none";
 
-  // Initial load
+if (notifPopupVisible) {
+unreadCount = 0;
+notifCountEl.textContent = "0";
+notifCountEl.style.display = "none";
+}
+};
+
+// For testing, add some initial notifications
+addNotification("Welcome to the system");
+addNotification("You have 3 new messages");
+addNotification("Server maintenance tonight");
+
+// Call renderNotifications on page load to ensure state is correctly updated
+renderNotifications();
+
+////////////////////////////////////////////////////
+
+// Listen for Firebase new chat messages to add notifications
+const chatsRef = db.ref("chats");
+chatsRef.on("child_added", (chatSnapshot) => {
+const chatId = chatSnapshot.key;
+const messagesRef = chatsRef.child(chatId);
+
+messagesRef.on("child_added", (msgSnap) => {
+const msg = msgSnap.val();
+if (msg.sender !== username) {
+const notifText = `New message from ${msg.sender}: ${msg.text}`;
+addNotification(notifText);
+fireSystemNotification(`New message from ${msg.sender}`, msg.text);
+}
+});
+});
+
+// Browser notification with service worker
+async function fireSystemNotification(title, message) {
+if (!("Notification" in window)) return;
+if (Notification.permission === "granted") {
+const reg = await navigator.serviceWorker.getRegistration();
+if (reg) {
+reg.showNotification(title, {
+body: message,
+icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
+vibrate: [100, 50, 100],
+tag: "chat-message",
+renotify: true,
+});
+}
+}
+}
+
+// Request notification permission if not granted
+if ("Notification" in window && Notification.permission !== "granted") {
+Notification.requestPermission();
+}
+
+// Register Service Worker
+if ("serviceWorker" in navigator) {
+navigator.serviceWorker
+.register("sw.js")
+.then(reg => {
+console.log("Service Worker registered", reg.scope);
+})
+.catch(err => {
+console.error("Service Worker registration failed", err);
+});
+}
+
 </script>
 </body>
 </html>
